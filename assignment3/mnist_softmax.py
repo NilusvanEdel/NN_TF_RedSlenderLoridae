@@ -41,9 +41,9 @@ for i in range(1000):
   list_of_numbers[i] = i
   list_of_accuracy[i] = sess.run(accuracy, feed_dict={x: mnist.validation.images, y_: mnist.validation.labels})
 # check for truth value
-final_correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
+final_correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
 #cast array to float and calculate mean
 final_accuracy = tf.reduce_mean(tf.cast(final_correct_prediction, tf.float32))
 print(sess.run(final_accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
-plt.plot(list_of_numbers,list_of_accuracy)
+plt.plot(list_of_numbers, list_of_accuracy)
 plt.show()
