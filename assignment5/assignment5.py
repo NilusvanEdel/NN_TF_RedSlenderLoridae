@@ -50,13 +50,27 @@ validationData = data[int(border2):int(border3)]
 validationLabels = dataLabels[int(border2):int(border3)]
 
 
+# get miniBatches with equal size of samples for each digit
 def getMiniBatch(size):
     miniBatch = data[:size]
     miniBatchLabels = dataLabels[:size]
+    noPerDigit = int(size/10)
+    noPerDigitArr = np.zeros(10)
+    cnt = 0
     for i in range(size):
         randomNo = random.randint(0, len(trainData)-1)
+        while (noPerDigitArr[trainLabels[randomNo]] >= noPerDigit):
+            randomNo = random.randint(0, len(trainData) - 1)
         miniBatch[i] = trainData[randomNo]
         miniBatchLabels[i] = trainLabels[randomNo]
+        noPerDigitArr[trainLabels[randomNo]] += 1
+        cnt += 1
+    # in case of size%10 != 0
+    while (cnt < size):
+        randomNo = random.randint(0, len(trainData) - 1)
+        miniBatch[i] = trainData[randomNo]
+        miniBatchLabels[i] = trainLabels[randomNo]
+        cnt += 1
     returnArray = [miniBatch, miniBatchLabels]
     return returnArray
 
@@ -84,9 +98,15 @@ accuracyFigure, accuracyAxis = plt.subplots(1,1)
 weightFigure, weightAxes = plt.subplots(2,5)
 
 with tf.Session() as session:
-    session.run(tf.initialize_all_variables())
+    # activate if run the first time, deactivate otherwise
+    # session.run(tf.initialize_all_variables())
+    saver = tf.train.Saver()
+    # activate to restore the old variables
+    saver.restore(session, "./simple-ffnn.ckpt")
 
     for step in range(trainingSteps):
+        if step % 100 == 0 or step == (trainingSteps-1):
+            saver.save(session, "./simple-ffnn.ckpt")
         images, labels = getMiniBatch(miniBatchSize)
         images = images.reshape([-1, 784])
         trainingAccuracy[step], _ = session.run([accuracy, trainingStep], feed_dict={x: images, desired: labels})
