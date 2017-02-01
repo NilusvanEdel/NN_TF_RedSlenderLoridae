@@ -39,7 +39,7 @@ for i in range(4):
 plt.show()
 
 # split the data into training, test and validation sets
-border1 = len(data)*0.75
+border1 = len(data)*0.85
 border2 = len(data)*0.9
 border3 = len(data)
 trainData = data[:int(border1)]
@@ -129,7 +129,7 @@ with tf.Session() as session:
     # saver.restore(session, "./simple-ffnn.ckpt")
     cnt = 0
     for step in range(trainingSteps):
-        print (cnt)
+        print(cnt)
         cnt += 1
         if step % 100 == 0 or step == (trainingSteps - 1):
             saver.save(session, "./simple-ffnn.ckpt")
@@ -165,8 +165,9 @@ with tf.Session() as session:
                            cmap=plt.get_cmap('Blues'))
             actFig.canvas.draw()
             print("just do it")
+        print("quak")
+    print("hier")
     images, labels = testData, testLabels
     images = images.reshape([-1, 28, 28, 1])
     testAccuracy = session.run(accuracy, feed_dict={x: images, desired: labels})
     print("Final: ", testAccuracy)
-plt.show()
