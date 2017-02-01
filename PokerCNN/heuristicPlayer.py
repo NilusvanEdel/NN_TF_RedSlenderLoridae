@@ -2,7 +2,7 @@ import deuces as de
 from pypokerengine.players import BasePokerPlayer
 from random import randint
 
-
+# our main PokerPlay the taining will be based on him
 class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
     def __init__(self):
         self.__community_card = []

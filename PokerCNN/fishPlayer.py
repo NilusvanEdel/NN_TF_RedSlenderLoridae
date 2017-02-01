@@ -1,7 +1,7 @@
 from pypokerengine.players import BasePokerPlayer
 from random import randint
 
-
+# a really dumb PokerPlayer who got a 50% chance to either call(check) or raise(minimal)
 class FishPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
     def __init__(self):
         self.__community_card = []

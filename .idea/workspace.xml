@@ -2,36 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="cc9b0e3e-0a47-47bc-a8d5-72b551c31192" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/assignment4/t10k-images-idx3-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/assignment4/t10k-labels-idx1-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/assignment4/train-images-idx3-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/assignment4/train-labels-idx1-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/data/t10k-images-idx3-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/data/t10k-images.idx3-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/data/t10k-labels-idx1-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/data/t10k-labels.idx1-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/data/train-images-idx3-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/data/train-images.idx3-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/data/train-labels-idx1-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/data/train-labels.idx1-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/t10k-images.idx3-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/t10k-labels.idx1-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/train-images.idx3-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/train-labels.idx1-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment8/t10k-images-idx3-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment8/t10k-images.idx3-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment8/t10k-labels-idx1-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment8/t10k-labels.idx1-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment8/train-images-idx3-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment8/train-images.idx3-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment8/train-labels-idx1-ubyte.gz" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment8/train-labels.idx1-ubyte" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/PokerCNN/trainingsGenerator.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/MNIST.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assignment4/assignment4_solution" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/PokerCNN/fishPlayer.py" afterPath="$PROJECT_DIR$/PokerCNN/fishPlayer.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/PokerCNN/heuristicPlayer.py" afterPath="$PROJECT_DIR$/PokerCNN/heuristicPlayer.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/PokerCNN/trainingsGenerator.py" afterPath="$PROJECT_DIR$/PokerCNN/trainingsGenerator.py" />
     </list>
     <ignored path="untitled.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -54,8 +27,8 @@
       <file leaf-file-name="heuristicPlayer.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/PokerCNN/heuristicPlayer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1808">
-              <caret line="109" column="35" selection-start-line="109" selection-start-column="35" selection-end-line="109" selection-end-column="35" />
+            <state relative-caret-position="72">
+              <caret line="4" column="53" selection-start-line="4" selection-start-column="53" selection-end-line="4" selection-end-column="53" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
@@ -66,9 +39,11 @@
       <file leaf-file-name="trainingsGenerator.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/PokerCNN/trainingsGenerator.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
+            <state relative-caret-position="72">
+              <caret line="4" column="101" selection-start-line="4" selection-start-column="101" selection-end-line="4" selection-end-column="101" />
+              <folding>
+                <element signature="e#0#19#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -76,8 +51,8 @@
       <file leaf-file-name="fishPlayer.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/PokerCNN/fishPlayer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="10" column="89" selection-start-line="10" selection-start-column="89" selection-end-line="10" selection-end-column="89" />
+            <state relative-caret-position="54">
+              <caret line="3" column="0" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="88" />
               <folding>
                 <element signature="e#0#49#0" expanded="true" />
               </folding>
@@ -176,10 +151,11 @@
         <option value="$USER_HOME$/anaconda3/lib/python3.5/site-packages/pypokerengine/engine/dealer.py" />
         <option value="$USER_HOME$/anaconda3/lib/python3.5/site-packages/pypokerengine/engine/action_checker.py" />
         <option value="$PROJECT_DIR$/PokerCNN/HeuristicPlayer.py" />
-        <option value="$PROJECT_DIR$/PokerCNN/fishPlayer.py" />
-        <option value="$PROJECT_DIR$/PokerCNN/heuristicPlayer.py" />
         <option value="$PROJECT_DIR$/PokerCNN/game.py" />
         <option value="$PROJECT_DIR$/PokerCNN/libs/trainingsGenerator.py" />
+        <option value="$PROJECT_DIR$/PokerCNN/fishPlayer.py" />
+        <option value="$PROJECT_DIR$/PokerCNN/heuristicPlayer.py" />
+        <option value="$PROJECT_DIR$/PokerCNN/trainingsGenerator.py" />
       </list>
     </option>
   </component>
@@ -1038,16 +1014,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/PokerCNN/fishPlayer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="10" column="89" selection-start-line="10" selection-start-column="89" selection-end-line="10" selection-end-column="89" />
-          <folding>
-            <element signature="e#0#49#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/PokerCNN/game.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="144">
@@ -1058,10 +1024,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/PokerCNN/fishPlayer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="54">
+          <caret line="3" column="0" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="88" />
+          <folding>
+            <element signature="e#0#49#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/PokerCNN/heuristicPlayer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1808">
-          <caret line="109" column="35" selection-start-line="109" selection-start-column="35" selection-end-line="109" selection-end-column="35" />
+        <state relative-caret-position="72">
+          <caret line="4" column="53" selection-start-line="4" selection-start-column="53" selection-end-line="4" selection-end-column="53" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>
@@ -1070,9 +1046,11 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/PokerCNN/trainingsGenerator.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+        <state relative-caret-position="72">
+          <caret line="4" column="101" selection-start-line="4" selection-start-column="101" selection-end-line="4" selection-end-column="101" />
+          <folding>
+            <element signature="e#0#19#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
