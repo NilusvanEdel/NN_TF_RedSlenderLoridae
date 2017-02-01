@@ -2,7 +2,7 @@ import deuces as de
 from pypokerengine.players import BasePokerPlayer
 from random import randint
 
-# our main PokerPlay the taining will be based on him
+# our main PokerPlay the taining will be based on him (thus he has only 12 possible actions)
 class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
     def __init__(self):
         self.__community_card = []
@@ -74,34 +74,46 @@ def getPreFlopAction(valid_actions, hole_card):
     # 5% to raise 1,5x
     elif actionProb > 65 and actionProb <= 70:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*1.5
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 1.5 + amount_call_action
     # 5% to raise 2x
     elif actionProb > 70 and actionProb <= 75:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*2
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 2 + amount_call_action
     # 5% to raise 3x
     elif actionProb > 75 and actionProb <= 80:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*3
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 3 + amount_call_action
     # 5% to raise 5x
     elif actionProb > 80 and actionProb <= 85:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*5
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 5 + amount_call_action
     # 5% to raise 10x
     elif actionProb > 85 and actionProb <= 90:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*10
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action)* 10 + amount_call_action
     # 5% to raise 25x
     elif actionProb > 90 and actionProb <= 95:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*25
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action)* 25 + amount_call_action
     # 5% to go all-in
     else:
         raise_action_info = valid_actions[2]
         action, amount = raise_action_info["action"], raise_action_info["amount"]["max"]
-    if amount>valid_actions[2]["amount"]["max"]:
+    if action == "raise" and amount > valid_actions[2]["amount"]["max"]:
         amount = valid_actions[2]["amount"]["max"]
-    return action, amount
+    return action, int(amount)
 
 
 def getPostFlopAction(valid_actions, hand, board):
@@ -122,31 +134,43 @@ def getPostFlopAction(valid_actions, hand, board):
     # 5% to raise 1,5x
     elif actionProb > 65 and actionProb <= 70:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*1.5
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 1.5 + amount_call_action
     # 5% to raise 2x
     elif actionProb > 70 and actionProb <= 75:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*2
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 2 + amount_call_action
     # 5% to raise 3x
     elif actionProb > 75 and actionProb <= 80:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*3
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 3 + amount_call_action
     # 5% to raise 5x
     elif actionProb > 80 and actionProb <= 85:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*5
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 5 + amount_call_action
     # 5% to raise 10x
     elif actionProb > 85 and actionProb <= 90:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*10
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 10 + amount_call_action
     # 5% to raise 25x
     elif actionProb > 90 and actionProb <= 95:
         raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]*25
+        amount_call_action = valid_actions[1]["amount"]
+        action = raise_action_info["action"]
+        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 25 + amount_call_action
     # 5% to go all-in
     else:
         raise_action_info = valid_actions[2]
         action, amount = raise_action_info["action"], raise_action_info["amount"]["max"]
-    if amount>valid_actions[2]["amount"]["max"]:
+    if action == "raise" and amount > valid_actions[2]["amount"]["max"]:
         amount = valid_actions[2]["amount"]["max"]
-    return action, amount
+    return action, int(amount)

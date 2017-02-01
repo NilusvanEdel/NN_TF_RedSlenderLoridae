@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import struct
 
 # everything so far basically: https://www.tensorflow.org/tutorials/mnist/pros/#build_a_multilayer_convolutional_network
-
+# when finished this should be the neural network which learns from the generated data
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
