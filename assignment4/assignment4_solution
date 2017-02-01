@@ -1,0 +1,149 @@
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+import struct
+
+
+class MNIST():
+    def __init__(self, directory="./"):
+        self.testData = self._load(directory + "t10k-images.idx3-ubyte")
+        self.testLabels = self._load(directory + "t10k-labels.idx1-ubyte", True)
+        self.trainingData = self._load(directory + "train-images.idx3-ubyte")
+        self.trainingLabels = self._load(directory + "train-labels.idx1-ubyte", True)
+
+        randomIndices = np.random.choice(len(self.trainingLabels), 6000, replace=False)
+        self.validationData = self.trainingData[randomIndices]
+        self.validationLabels = self.trainingLabels[randomIndices]
+        self.trainingData = np.delete(self.trainingData, randomIndices, axis=0)
+        self.trainingLabels = np.delete(self.trainingLabels, randomIndices)
+
+    def _load(self, path, labels=False):
+        with open(path, "rb") as fd:
+            magic, numberOfItems = struct.unpack(">ii", fd.read(8))
+            if (not labels and magic != 2051) or (labels and magic != 2049):
+                raise LookupError("Not a MNIST file")
+
+            if not labels:
+                rows, cols = struct.unpack(">II", fd.read(8))
+                images = np.fromfile(fd, dtype='uint8')
+                images = images.reshape((numberOfItems, rows, cols))
+                return images
+            else:
+                labels = np.fromfile(fd, dtype='uint8')
+                return labels
+
+    def getRandomSample(self, size):
+        randomIndices = np.random.choice(len(self.trainingLabels), size, replace=False)
+        return self.trainingData[randomIndices], self.trainingLabels[randomIndices]
+
+    def getValidationData(self):
+        return self.validationData, self.validationLabels
+
+    def getTestData(self):
+        return self.testData, self.testLabels
+
+
+mnist = MNIST("./")
+
+x = tf.placeholder(tf.float32, shape = [None, 28, 28, 1])
+desired = tf.placeholder(tf.int64, shape = [None])
+
+# First convolutional layer
+initval = tf.truncated_normal([5, 5, 1, 32], stddev = 0.1)
+kernels1 = tf.Variable(initval)
+bias1 = tf.Variable(tf.constant(0.1, shape = [32]))
+
+conv1 = tf.nn.conv2d(x, kernels1, strides = [1, 1, 1, 1], padding = "SAME")
+actv1 = tf.nn.tanh(conv1 + bias1)
+pool1 = tf.nn.max_pool(actv1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME")
+
+# Second convolutional layer
+kernels2 = tf.Variable(tf.truncated_normal([5, 5, 32, 64], stddev = 0.1))
+bias2 = tf.Variable(tf.constant(0.1, shape = [64]))
+
+conv2 = tf.nn.conv2d(pool1, kernels2, strides = [1, 1, 1, 1], padding = "SAME")
+actv2 = tf.nn.tanh(conv2 + bias2)
+pool2 = tf.nn.max_pool(actv2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME")
+
+# Vectorize the output of the second convolutional layer
+pool2Flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
+
+# Fully connected feed forward layer
+initval = tf.truncated_normal([7 * 7 * 64, 1024], stddev = 0.1)
+weights1 = tf.Variable(initval)
+ffnnbias1 = tf.Variable(tf.constant(0.1, shape = [1024]))
+
+ffnn1act = tf.nn.tanh(tf.matmul(pool2Flat, weights1) + ffnnbias1)
+
+# Fully connected readout layer
+weights2 = tf.Variable(tf.truncated_normal([1024, 10], stddev = 0.1))
+ffnnbias2 = tf.Variable(tf.constant(0.1, shape = [10]))
+
+ffnn2act = tf.matmul(ffnn1act, weights2) + ffnnbias2
+
+crossEntropy = tf.nn.sparse_softmax_cross_entropy_with_logits(ffnn2act, desired)
+crossEntropy = tf.reduce_mean(crossEntropy)
+
+train_step = tf.train.AdamOptimizer(0.00007).minimize(crossEntropy)
+
+# Calculate the accuracy
+accuracy = tf.equal(tf.argmax(tf.nn.softmax(ffnn2act), 1), desired)
+accuracy = tf.reduce_mean(tf.cast(accuracy, tf.float32))
+
+
+trainingSteps = 1000
+plotStepSize = 25
+miniBatchSize = 300
+
+trainingAccurcies = np.ones(trainingSteps)
+validationAccuracies = np.ones(trainingSteps)
+
+trainingCrossEntropies = np.zeros(trainingSteps)
+validationCrossEntropies = np.zeros(trainingSteps)
+
+accFig, accAx = plt.subplots(1,1)
+ceFig, ceAx = plt.subplots(1,1)
+actFig, actAx = plt.subplots(10,1)
+
+with tf.Session() as session:
+    session.run(tf.initialize_all_variables())
+
+    for step in range(trainingSteps):
+        images, labels = mnist.getRandomSample(miniBatchSize)
+        images = images.reshape([-1, 28, 28, 1])
+        trainingAccurcies[step], trainingCrossEntropies[step], _ = session.run([accuracy, crossEntropy, train_step],
+                                                                               feed_dict={x: images, desired: labels})
+
+        if step % plotStepSize == 0 or step == 0 or step == trainingSteps - 1:
+            images, labels = mnist.getValidationData()
+            images = images.reshape([-1, 28, 28, 1])
+            validationAccuracy, validationcrossEntropy, outputActivation = session.run(
+                [accuracy, crossEntropy, ffnn2act], feed_dict={x: images, desired: labels})
+            if step != trainingSteps - 1:
+                validationAccuracies[step:step + plotStepSize] = [validationAccuracy] * plotStepSize
+                validationCrossEntropies[step:step + plotStepSize] = [validationcrossEntropy] * plotStepSize
+
+            accAx.cla()
+            accAx.plot(trainingAccurcies, color='b')
+            accAx.plot(validationAccuracies, color='r')
+            accFig.canvas.draw()
+
+            ceAx.cla()
+            ceAx.plot(trainingCrossEntropies, color='b')
+            ceAx.plot(validationCrossEntropies, color='r')
+            ceFig.canvas.draw()
+
+            outputActivation = outputActivation.T
+            for i, ax in enumerate(actAx):
+                ax.cla()
+                ax.set_xticklabels([])
+                ax.set_yticklabels([])
+                ax.matshow(np.matrix(outputActivation[i]), extent=[0, 6000, 0, 1], aspect='auto',
+                           cmap=plt.get_cmap('Blues'))
+            actFig.canvas.draw()
+
+    images, labels = mnist.getTestData()
+    images = images.reshape([-1, 28, 28, 1])
+    testAccuracy = session.run(accuracy, feed_dict={x: images, desired: labels})
+
+    print("Final: ", testAccuracy)
