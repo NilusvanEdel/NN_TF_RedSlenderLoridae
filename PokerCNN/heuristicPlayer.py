@@ -42,7 +42,7 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
 
     def receive_round_start_message(self, round_count, hole_card, seats):
         self.__community_card = []
-        self.__last_action = [None]
+        self.__last_action = ["call", 0]
         pass
 
     def receive_street_start_message(self, street, round_state):
@@ -53,6 +53,8 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
         self.__stack = round_state["seats"][self.__positionInGameInfos]["stack"]
         if round_state["action_histories"]:
             acthis = round_state["action_histories"]
+            action = "call"
+            amount = 0
             if "preflop" in acthis:
                 count = len(acthis["preflop"])
                 for x in acthis["preflop"][::-1]:
@@ -89,6 +91,7 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
                         amount = self.uuid in acthis["river"][count]["river"]
                         break
                     break
+            self.__last_action = [action, amount]
 
         pass
 

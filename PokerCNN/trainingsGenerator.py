@@ -26,12 +26,11 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                 print("______________________________________________________________________")
                 print("simulation_time")
                 '''
-                game_result = start_poker_with_dealer(config, dealer, verbose=2)
+                game_result = start_poker_with_dealer(config, dealer, verbose=0)
                 '''
                 print("simulation over")
                 print("______________________________________________________________________")
                 '''
-                print("hier")
             return HeuristicPlayer.bot_action(self, valid_actions, hole_card, round_state,
                                         dealer, self.__community_card, self.__stack, self.__last_action)
         else:
