@@ -6,12 +6,13 @@ from heuristicPlayer import HeuristicPlayer
 
 # basically the HeuristicPlayer but this one will store the relevant data to train the neural network
 class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
-    def __init__(self, next_action):
+    def __init__(self, next_action, save_state):
         self.__community_card = []
         self.__stack = 0
         self.__positionInGameInfos = 0
-        self.__last_action = [None]*1
+        self.__last_action = ["call", 0]
         self.__next_action = next_action
+        self.__save_state = save_state
 
     def declare_action(self, valid_actions, hole_card, round_state, dealer):
         ''' a backup of the current gamestate is created (all stored in the current dealer) and each possible
@@ -19,25 +20,28 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
         if self.__next_action == -1:
             bu_dealer = dealer.copy()
             config = setup_config(max_round=1, initial_stack=100, small_blind_amount=5)
-            for i in range (10):
-                algorithm = TrainingsGenerator(self.__next_action+i+1)
-                bu_dealer.change_algorithm_of_player(self.uuid, algorithm)
-                '''
-                print("______________________________________________________________________")
-                print("simulation_time")
-                '''
-                game_result = start_poker_with_dealer(config, dealer, verbose=0)
-                '''
-                print("simulation over")
-                print("______________________________________________________________________")
-                '''
+            if round_state["action_histories"]:
+                acthis = round_state["action_histories"]
+                if self.__save_state in acthis:
+                    for i in range (10):
+                        algorithm = TrainingsGenerator(self.__next_action+i+1, self.__save_state)
+                        bu_dealer.change_algorithm_of_player(self.uuid, algorithm)
+                        '''
+                        print("______________________________________________________________________")
+                        print("simulation_time")
+                        '''
+                        game_result = start_poker_with_dealer(config, dealer, verbose=0)
+                        '''
+                        print("simulation over")
+                        print("______________________________________________________________________")
+                        '''
             return HeuristicPlayer.bot_action(self, valid_actions, hole_card, round_state,
                                         dealer, self.__community_card, self.__stack, self.__last_action)
         else:
             if 0 < self.__next_action < 9:
                 action, amount = getAction(valid_actions, self.__stack,
                                            self.__last_action, self.__next_action)
-                self.__next_action = - 1
+                self.__next_action = - 2
                 return action, amount
             else:
                 return HeuristicPlayer.bot_action(self, valid_actions, hole_card,
@@ -52,7 +56,7 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
 
     def receive_round_start_message(self, round_count, hole_card, seats):
         self.__community_card = []
-        self.__last_action = [None]
+        self.__last_action = ["call", 0]
         pass
 
     def receive_street_start_message(self, street, round_state):
@@ -61,6 +65,8 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
     def receive_game_update_message(self, action, round_state):
         self.__community_card = round_state["community_card"]
         self.__stack = round_state["seats"][self.__positionInGameInfos]["stack"]
+        action = "call"
+        amount = "0"
         if round_state["action_histories"]:
             acthis = round_state["action_histories"]
             if "preflop" in acthis:
@@ -86,8 +92,8 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                 for x in acthis["turn"][::-1]:
                     count -= 1
                     if self.uuid in acthis["turn"][count]:
-                        action = self.uuid in acthis["turn"][count]["turn"]
-                        amount = self.uuid in acthis["turn"][count]["turn"]
+                        action = self.uuid in acthis["turn"][count]["action"]
+                        amount = self.uuid in acthis["turn"][count]["amount"]
                         break
                     break
             if "river" in acthis:
@@ -95,11 +101,11 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                 for x in acthis["river"][::-1]:
                     count -= 1
                     if self.uuid in acthis["river"][count]:
-                        action = self.uuid in acthis["river"][count]["river"]
-                        amount = self.uuid in acthis["river"][count]["river"]
+                        action = self.uuid in acthis["river"][count]["action"]
+                        amount = self.uuid in acthis["river"][count]["amount"]
                         break
                     break
-
+            self.__last_action = action, amount
         pass
 
     def receive_round_result_message(self, winners, hand_info, round_state):
@@ -118,7 +124,7 @@ def getAction(valid_actions, stack, last_action, action):
         if valid_actions[1]["amount"] >= stack:
             action, amount = valid_actions[1]["action"], valid_actions[1]["amount"]
         else:
-            amount = valid_actions[1]["amount"] - last_action[1] + stack
+            amount = valid_actions[1]["amount"] - int(last_action[1]) + stack
             action = valid_actions[2]["action"]
     # 10% to raise minimal
     elif action == 2:

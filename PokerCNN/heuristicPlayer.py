@@ -8,7 +8,7 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
         self.__community_card = []
         self.__stack = 0
         self.__positionInGameInfos = 0
-        self.__last_action = [None]*1
+        self.__last_action = ["call", 0]
     #  we define the logic to make an action through this method. (so this method would be the core of your AI)
     def declare_action(self, valid_actions, hole_card, round_state, dealer):
         return HeuristicPlayer.bot_action(self, valid_actions, hole_card,
@@ -78,8 +78,8 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
                 for x in acthis["turn"][::-1]:
                     count -= 1
                     if self.uuid in acthis["turn"][count]:
-                        action = self.uuid in acthis["turn"][count]["turn"]
-                        amount = self.uuid in acthis["turn"][count]["turn"]
+                        action = self.uuid in acthis["turn"][count]["action"]
+                        amount = self.uuid in acthis["turn"][count]["amount"]
                         break
                     break
             if "river" in acthis:
@@ -87,11 +87,11 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
                 for x in acthis["river"][::-1]:
                     count -= 1
                     if self.uuid in acthis["river"][count]:
-                        action = self.uuid in acthis["river"][count]["river"]
-                        amount = self.uuid in acthis["river"][count]["river"]
+                        action = self.uuid in acthis["river"][count]["action"]
+                        amount = self.uuid in acthis["river"][count]["amount"]
                         break
                     break
-            self.__last_action = [action, amount]
+            self.__last_action = action, amount
 
         pass
 
@@ -128,7 +128,8 @@ def getPreFlopAction(valid_actions, hole_card, stack, last_action):
         if valid_actions[1]["amount"] >= stack:
             action, amount = valid_actions[1]["action"], valid_actions[1]["amount"]
         else:
-            amount = valid_actions[1]["amount"] - last_action[1] + stack
+            # no idea why there is sometimes a failure otherwise
+            amount = valid_actions[1]["amount"] - int(last_action[1]) + stack
             action = valid_actions[2]["action"]
     # 10% to raise minimal
     elif actionProb > 55 and actionProb <= 65:
@@ -196,7 +197,8 @@ def getPostFlopAction(valid_actions, hand, board, stack, last_action):
         if valid_actions[1]["amount"] >= stack:
             action, amount = valid_actions[1]["action"], valid_actions[1]["amount"]
         else:
-            amount = valid_actions[1]["amount"] - last_action[1] + stack
+            # no idea why necessary
+            amount = valid_actions[1]["amount"] - int(last_action[1]) + stack
             action = valid_actions[2]["action"]
     # 10% to raise minimal
     elif actionProb > 55 and actionProb <= 65:
