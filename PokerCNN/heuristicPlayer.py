@@ -2,7 +2,7 @@ import deuces as de
 from pypokerengine.players import BasePokerPlayer
 from random import randint
 
-# our main PokerPlay the taining will be based on him (thus he has only 12 possible actions)
+# our main PokerPlay the training will be based on him (thus he has only 12 possible actions)
 class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
     def __init__(self):
         self.__community_card = []
@@ -11,23 +11,26 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
         self.__last_action = [None]*1
     #  we define the logic to make an action through this method. (so this method would be the core of your AI)
     def declare_action(self, valid_actions, hole_card, round_state, dealer):
+        return HeuristicPlayer.bot_action(self, valid_actions, hole_card,
+                            round_state, dealer, self.__community_card, self.__stack, self.__last_action)
+
+    def bot_action(self, valid_actions, hole_card, round_state, dealer, community_card, stack, last_action):
         # valid_actions format => [fold_action_info, call_action_info, raise_action_info]
-        if self.__community_card != []:
-            board = [None]*len(self.__community_card)
-            hand = [None]*len(hole_card)
-            for i in range(len(self.__community_card)):
-                card = self.__community_card[i][::-1]
+        if community_card:
+            board = [None] * len(community_card)
+            hand = [None] * len(hole_card)
+            for i in range(len(community_card)):
+                card = community_card[i][::-1]
                 card = card.replace(card[1], card[1].lower())
                 board[i] = de.Card.new(card)
             for i in range(len(hole_card)):
                 card = hole_card[i][::-1]
                 card = card.replace(card[1], card[1].lower())
                 hand[i] = de.Card.new(card)
-            action, amount = getPostFlopAction(valid_actions, hand, board, self.__stack, self.__last_action)
+            action, amount = getPostFlopAction(valid_actions, hand, board, stack, last_action)
         else:
-            action, amount = getPreFlopAction(valid_actions, hole_card, self.__stack, self.__last_action)
-            self.__stack -= amount
-        self.__last_action = {action, amount}
+            action, amount = getPreFlopAction(valid_actions, hole_card, stack, last_action)
+            stack -= amount
         return action, amount
 
     def receive_game_start_message(self, game_info):

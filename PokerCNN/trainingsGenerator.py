@@ -1,48 +1,48 @@
 import deuces as de
-from pypokerengine.players import BasePokerPlayer
 from random import randint
 from pypokerengine.engine.dealer import Dealer
 from pypokerengine.api.game import setup_config, start_poker_with_dealer
 from heuristicPlayer import HeuristicPlayer
 
 # basically the HeuristicPlayer but this one will store the relevant data to train the neural network
-class TrainingsGenerator(BasePokerPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
-    def __init__(self):
+class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
+    def __init__(self, next_action):
         self.__community_card = []
         self.__stack = 0
         self.__positionInGameInfos = 0
         self.__last_action = [None]*1
+        self.__next_action = next_action
 
     def declare_action(self, valid_actions, hole_card, round_state, dealer):
         ''' a backup of the current gamestate is created (all stored in the current dealer) and each possible
         round will be played once in this simulation and the result will be stored '''
-        if (self.__community_card != []):
+        if self.__next_action == -1:
             bu_dealer = dealer.copy()
             config = setup_config(max_round=1, initial_stack=100, small_blind_amount=5)
-            algorithm = HeuristicPlayer()
-            bu_dealer.change_algorithm_of_player(self.uuid, algorithm)
-            print("______________________________________________________________________")
-            print("simulation_time")
-            game_result = start_poker_with_dealer(config, dealer, verbose=2)
-            print("simulation over")
-            print("______________________________________________________________________")
-        # valid_actions format => [fold_action_info, call_action_info, raise_action_info]
-        if self.__community_card != []:
-            board = [None] * len(self.__community_card)
-            hand = [None] * len(hole_card)
-            for i in range(len(self.__community_card)):
-                card = self.__community_card[i][::-1]
-                card = card.replace(card[1], card[1].lower())
-                board[i] = de.Card.new(card)
-            for i in range(len(hole_card)):
-                card = hole_card[i][::-1]
-                card = card.replace(card[1], card[1].lower())
-                hand[i] = de.Card.new(card)
-            action, amount = getPostFlopAction(valid_actions, hand, board, self.__stack, self.__last_action)
+            for i in range (10):
+                algorithm = TrainingsGenerator(self.__next_action+i+1)
+                bu_dealer.change_algorithm_of_player(self.uuid, algorithm)
+                '''
+                print("______________________________________________________________________")
+                print("simulation_time")
+                '''
+                game_result = start_poker_with_dealer(config, dealer, verbose=2)
+                '''
+                print("simulation over")
+                print("______________________________________________________________________")
+                '''
+                print("hier")
+            return HeuristicPlayer.bot_action(self, valid_actions, hole_card, round_state,
+                                        dealer, self.__community_card, self.__stack, self.__last_action)
         else:
-            action, amount = getPreFlopAction(valid_actions, hole_card, self.__stack, self.__last_action)
-            self.__stack -= amount
-        return action, amount
+            if 0 < self.__next_action < 9:
+                action, amount = getAction(valid_actions, self.__stack,
+                                           self.__last_action, self.__next_action)
+                self.__next_action = - 1
+                return action, amount
+            else:
+                return HeuristicPlayer.bot_action(self, valid_actions, hole_card,
+                                round_state, dealer, self.__community_card, self.__stack, self.__last_action)
 
     def receive_game_start_message(self, game_info):
         for i in range(len(game_info["seats"])):
@@ -106,95 +106,12 @@ class TrainingsGenerator(BasePokerPlayer):  # Do not forget to make parent class
     def receive_round_result_message(self, winners, hand_info, round_state):
         pass
 
-def getPreFlopAction(valid_actions, hole_card, stack, last_action):
-    ''' valid actions in the NN
-    0 = check
-    1 = fold
-    2 = call
-    3 = bet
-    4 = raise/bet (1x)
-    5 = r (1,5x)
-    6 = r (2x)
-    7 = r (3x)
-    8 = r (5x)
-    9 = r (10x)
-    10 = r (25x)
-    11 = r (all-in)
-    '''
-    # 10% fold baseline
-    actionProb = randint(1, 100)
-    if actionProb <= 10:
+def getAction(valid_actions, stack, last_action, action):
+    if action <= 0:
         fold_action_info = valid_actions[0]
         action, amount = fold_action_info["action"], fold_action_info["amount"]
     # 45% call or if no raise is possible anymore
-    elif actionProb > 10 and actionProb <= 55:
-        call_action_info = valid_actions[1]
-        action, amount = call_action_info["action"], call_action_info["amount"]
-    # if no simple raise is possible anymore
-    elif valid_actions[2]["amount"]["min"] == -1:
-        if valid_actions[1]["amount"] >= stack:
-            action, amount = valid_actions[1]["action"], valid_actions[1]["amount"]
-        else:
-            amount = valid_actions[1]["amount"] - last_action[1] + stack
-            action = valid_actions[2]["action"]
-    # 10% to raise minimal
-    elif actionProb > 55 and actionProb <= 65:
-        raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]
-    # 5% to raise 1,5x
-    elif actionProb > 65 and actionProb <= 70:
-        raise_action_info = valid_actions[2]
-        amount_call_action = valid_actions[1]["amount"]
-        action = raise_action_info["action"]
-        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 1.5 + amount_call_action
-    # 5% to raise 2x
-    elif actionProb > 70 and actionProb <= 75:
-        raise_action_info = valid_actions[2]
-        amount_call_action = valid_actions[1]["amount"]
-        action = raise_action_info["action"]
-        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 2 + amount_call_action
-    # 5% to raise 3x
-    elif actionProb > 75 and actionProb <= 80:
-        raise_action_info = valid_actions[2]
-        amount_call_action = valid_actions[1]["amount"]
-        action = raise_action_info["action"]
-        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 3 + amount_call_action
-    # 5% to raise 5x
-    elif actionProb > 80 and actionProb <= 85:
-        raise_action_info = valid_actions[2]
-        amount_call_action = valid_actions[1]["amount"]
-        action = raise_action_info["action"]
-        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 5 + amount_call_action
-    # 5% to raise 10x
-    elif actionProb > 85 and actionProb <= 90:
-        raise_action_info = valid_actions[2]
-        amount_call_action = valid_actions[1]["amount"]
-        action = raise_action_info["action"]
-        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 10 + amount_call_action
-    # 5% to raise 25x
-    elif actionProb > 90 and actionProb <= 95:
-        raise_action_info = valid_actions[2]
-        amount_call_action = valid_actions[1]["amount"]
-        action = raise_action_info["action"]
-        amount = (raise_action_info["amount"]["min"] - amount_call_action) * 25 + amount_call_action
-    # 5% to go all-in
-    else:
-        raise_action_info = valid_actions[2]
-        action, amount = raise_action_info["action"], raise_action_info["amount"]["max"]
-    if valid_actions[2]["amount"]["max"] != -1:
-        if action == "raise" and amount > valid_actions[2]["amount"]["max"]:
-            amount = valid_actions[2]["amount"]["max"]
-    return action, int(amount)
-
-def getPostFlopAction(valid_actions, hand, board, stack, last_action):
-    evaluator = de.Evaluator()
-    evaluation = evaluator.get_five_card_rank_percentage(evaluator.evaluate(hand, board))
-    actionProb = (1 - evaluation) * 100
-    if actionProb <= 10:
-        fold_action_info = valid_actions[0]
-        action, amount = fold_action_info["action"], fold_action_info["amount"]
-    # 45% call or if no raise is possible anymore
-    elif actionProb > 10 and actionProb <= 55:
+    elif action == 1:
         call_action_info = valid_actions[1]
         action, amount = call_action_info["action"], call_action_info["amount"]
     # no simple raise possible anymore
@@ -205,41 +122,41 @@ def getPostFlopAction(valid_actions, hand, board, stack, last_action):
             amount = valid_actions[1]["amount"] - last_action[1] + stack
             action = valid_actions[2]["action"]
     # 10% to raise minimal
-    elif actionProb > 55 and actionProb <= 65:
+    elif action == 2:
         raise_action_info = valid_actions[2]
         action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]
     # 5% to raise 1,5x
-    elif actionProb > 65 and actionProb <= 70:
+    elif action == 3:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
         amount = (raise_action_info["amount"]["min"] - amount_call_action) * 1.5 + amount_call_action
     # 5% to raise 2x
-    elif actionProb > 70 and actionProb <= 75:
+    elif action == 4:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
         amount = (raise_action_info["amount"]["min"] - amount_call_action) * 2 + amount_call_action
     # 5% to raise 3x
-    elif actionProb > 75 and actionProb <= 80:
+    elif action == 5:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
         amount = (raise_action_info["amount"]["min"] - amount_call_action) * 3 + amount_call_action
     # 5% to raise 5x
-    elif actionProb > 80 and actionProb <= 85:
+    elif action == 6:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
         amount = (raise_action_info["amount"]["min"] - amount_call_action) * 5 + amount_call_action
     # 5% to raise 10x
-    elif actionProb > 85 and actionProb <= 90:
+    elif action == 7:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
         amount = (raise_action_info["amount"]["min"] - amount_call_action) * 10 + amount_call_action
     # 5% to raise 25x
-    elif actionProb > 90 and actionProb <= 95:
+    elif action == 8:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
