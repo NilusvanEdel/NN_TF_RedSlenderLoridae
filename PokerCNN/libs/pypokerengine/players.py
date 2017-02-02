@@ -1,3 +1,4 @@
+from pypokerengine.engine.dealer import Dealer
 class BasePokerPlayer(object):
   """Base Poker client implementation
 
@@ -15,7 +16,7 @@ class BasePokerPlayer(object):
   def __init__(self):
     pass
 
-  def declare_action(self, valid_actions, hole_card, round_state):
+  def declare_action(self, valid_actions, hole_card, round_state, dealer):
     err_msg = self.__build_err_msg("declare_action")
     raise NotImplementedError(err_msg)
 
@@ -31,7 +32,7 @@ class BasePokerPlayer(object):
     err_msg = self.__build_err_msg("receive_street_start_message")
     raise NotImplementedError(err_msg)
 
-  def receive_game_update_message(self, new_action, round_state):
+  def receive_game_update_message(self, new_action, round_state, dealer):
     err_msg = self.__build_err_msg("receive_game_update_message")
     raise NotImplementedError(err_msg)
 
@@ -42,12 +43,12 @@ class BasePokerPlayer(object):
   def set_uuid(self, uuid):
     self.uuid = uuid
 
-  def respond_to_ask(self, message):
+  def respond_to_ask(self, message, dealer):
     """Called from Dealer when ask message received from RoundManager"""
     valid_actions, hole_card, round_state = self.__parse_ask_message(message)
-    return self.declare_action(valid_actions, hole_card, round_state)
+    return self.declare_action(valid_actions, hole_card, round_state, dealer)
 
-  def receive_notification(self, message):
+  def receive_notification(self, message, dealer):
     """Called from Dealer when notification received from RoundManager"""
     msg_type = message["message_type"]
 

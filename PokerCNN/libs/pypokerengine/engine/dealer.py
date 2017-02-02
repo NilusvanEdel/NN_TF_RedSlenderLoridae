@@ -1,6 +1,6 @@
 import random
 from collections import OrderedDict
-
+import copy
 from pypokerengine.engine.poker_constants import PokerConstants as Const
 from pypokerengine.engine.table import Table
 from pypokerengine.engine.player import Player
@@ -14,16 +14,43 @@ class Dealer:
     self.ante = ante if ante else 0
     self.initial_stack = initial_stack
     self.uuid_list = self.__generate_uuid_list()
-    self.message_handler = MessageHandler()
+    self.message_handler = MessageHandler(self)
     self.message_summarizer = MessageSummarizer(verbose=0)
     self.table = Table()
     self.blind_structure = {}
+    self.state = None
+    self.msgs = None
+
+  def set_table(self, new_table):
+      self.table = new_table
+  def set_uuid_list(self, new_uuid_list):
+      self.uuid_list = new_uuid_list
+  def set_message_handler(self, new_message_handler):
+      self.message_handler = new_message_handler
+  def set_message_summarizer(self, new_message_summarizer):
+      self.message_summarizer = new_message_summarizer
+  def set_blind_structure(self, new_blind_structure):
+      self.blind_structure = new_blind_structure
+
+  def copy(self):
+      new_dealer = copy.copy(self)
+      new_dealer.set_table(copy.copy(self.table))
+      new_dealer.set_uuid_list(copy.copy(self.uuid_list))
+      new_dealer.set_message_handler(copy.copy(self.message_handler))
+      new_dealer.set_message_summarizer(copy.copy(self.message_summarizer))
+      new_dealer.set_blind_structure(copy.copy(self.blind_structure))
+      return new_dealer
 
   def register_player(self, player_name, algorithm):
     self.__config_check()
     uuid = self.__escort_player_to_table(player_name)
     algorithm.set_uuid(uuid)
     self.__register_algorithm_to_message_handler(uuid, algorithm)
+
+  def change_algorithm_of_player(self, uuid, new_algorithm):
+      self.__config_check()
+      new_algorithm.set_uuid(uuid)
+      self.__register_algorithm_to_message_handler(uuid, new_algorithm)
 
   def set_verbose(self, verbose):
       self.message_summarizer.verbose = verbose
@@ -41,16 +68,32 @@ class Dealer:
     return self.__generate_game_result(max_round, table.seats)
 
   def play_round(self, round_count, blind_amount, ante, table):
-    state, msgs = RoundManager.start_new_round(round_count, blind_amount, ante, table)
+    self.state, self.msgs = RoundManager.start_new_round(round_count, blind_amount, ante, table)
     while True:
-      self.__message_check(msgs, state["street"])
-      if state["street"] != Const.Street.FINISHED:  # continue the round
-        action, bet_amount = self.__publish_messages(msgs)
-        state, msgs = RoundManager.apply_action(state, action, bet_amount)
+      self.__message_check(self.msgs, self.state["street"])
+      if self.state["street"] != Const.Street.FINISHED:  # continue the round
+        action, bet_amount = self.__publish_messages(self.msgs)
+        self.state, self.msgs = RoundManager.apply_action(self.state, action, bet_amount)
       else:  # finish the round after publish round result
-        self.__publish_messages(msgs)
+        self.__publish_messages(self.msgs)
         break
-    return state["table"]
+    return self.state["table"]
+
+  def continue_round(self):
+      table = self.table
+      ante, sb_amount = self.ante, self.small_blind_amount
+      state, msgs = self.state, self.msgs
+      while True:
+          self.__message_check(msgs, state["street"])
+          if state["street"] != Const.Street.FINISHED:  # continue the round
+              action, bet_amount = self.__publish_messages(msgs)
+              state, msgs = RoundManager.apply_action(state, action, bet_amount)
+          else:  # finish the round after publish round result
+              self.__publish_messages(msgs)
+              break
+      table = state["table"]
+      table.shift_dealer_btn()
+      return self.__generate_game_result(0, table.seats)
 
 
   def set_small_blind_amount(self, amount):
@@ -178,7 +221,8 @@ class Dealer:
 
 class MessageHandler:
 
-  def __init__(self):
+  def __init__(self, dealer):
+    self.dealer = dealer
     self.algo_owner_map = {}
 
   def register_algorithm(self, uuid, algorithm):
@@ -188,9 +232,9 @@ class MessageHandler:
     receivers = self.__fetch_receivers(address)
     for receiver in receivers:
       if msg["type"] == 'ask':
-        return receiver.respond_to_ask(msg["message"])
+        return receiver.respond_to_ask(msg["message"], self.dealer)
       elif msg["type"] == 'notification':
-        receiver.receive_notification(msg["message"])
+        receiver.receive_notification(msg["message"], self)
       else:
         raise ValueError("Received unexpected message which type is [%s]" % msg["type"])
 

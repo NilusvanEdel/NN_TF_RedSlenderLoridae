@@ -8,8 +8,9 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
         self.__community_card = []
         self.__stack = 0
         self.__positionInGameInfos = 0
+        self.__last_action = [None]*1
     #  we define the logic to make an action through this method. (so this method would be the core of your AI)
-    def declare_action(self, valid_actions, hole_card, round_state):
+    def declare_action(self, valid_actions, hole_card, round_state, dealer):
         # valid_actions format => [fold_action_info, call_action_info, raise_action_info]
         if self.__community_card != []:
             board = [None]*len(self.__community_card)
@@ -22,10 +23,11 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
                 card = hole_card[i][::-1]
                 card = card.replace(card[1], card[1].lower())
                 hand[i] = de.Card.new(card)
-            action, amount = getPostFlopAction(valid_actions, hand, board, self.__stack)
+            action, amount = getPostFlopAction(valid_actions, hand, board, self.__stack, self.__last_action)
         else:
-            action, amount = getPreFlopAction(valid_actions, hole_card, self.__stack)
+            action, amount = getPreFlopAction(valid_actions, hole_card, self.__stack, self.__last_action)
             self.__stack -= amount
+        self.__last_action = {action, amount}
         return action, amount
 
     def receive_game_start_message(self, game_info):
@@ -37,6 +39,7 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
 
     def receive_round_start_message(self, round_count, hole_card, seats):
         self.__community_card = []
+        self.__last_action = [None]
         pass
 
     def receive_street_start_message(self, street, round_state):
@@ -45,13 +48,52 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
     def receive_game_update_message(self, action, round_state):
         self.__community_card = round_state["community_card"]
         self.__stack = round_state["seats"][self.__positionInGameInfos]["stack"]
+        if round_state["action_histories"]:
+            acthis = round_state["action_histories"]
+            if "preflop" in acthis:
+                count = len(acthis["preflop"])
+                for x in acthis["preflop"][::-1]:
+                    count -= 1
+                    if self.uuid in acthis["preflop"][count]:
+                        action = self.uuid in acthis["preflop"][count]["action"]
+                        amount = self.uuid in acthis["preflop"][count]["amount"]
+                        break
+                    break
+            if "flop" in acthis:
+                count = len(acthis["flop"])
+                for x in acthis["flop"][::-1]:
+                    count -= 1
+                    if self.uuid in acthis["flop"][count]:
+                        action = self.uuid in acthis["flop"][count]["action"]
+                        amount = self.uuid in acthis["flop"][count]["amount"]
+                        break
+                    break
+            if "turn" in acthis:
+                count = len(acthis["turn"])
+                for x in acthis["turn"][::-1]:
+                    count -= 1
+                    if self.uuid in acthis["turn"][count]:
+                        action = self.uuid in acthis["turn"][count]["turn"]
+                        amount = self.uuid in acthis["turn"][count]["turn"]
+                        break
+                    break
+            if "river" in acthis:
+                count = len(acthis["river"])
+                for x in acthis["river"][::-1]:
+                    count -= 1
+                    if self.uuid in acthis["river"][count]:
+                        action = self.uuid in acthis["river"][count]["river"]
+                        amount = self.uuid in acthis["river"][count]["river"]
+                        break
+                    break
+
         pass
 
     def receive_round_result_message(self, winners, hand_info, round_state):
         pass
 
 
-def getPreFlopAction(valid_actions, hole_card, stack):
+def getPreFlopAction(valid_actions, hole_card, stack, last_action):
     ''' valid actions in the NN
     0 = check
     1 = fold
@@ -80,7 +122,8 @@ def getPreFlopAction(valid_actions, hole_card, stack):
         if valid_actions[1]["amount"] >= stack:
             action, amount = valid_actions[1]["action"], valid_actions[1]["amount"]
         else:
-            action, amount = valid_actions[2]["action"], stack
+            amount = valid_actions[1]["amount"] - last_action[1] + stack
+            action = valid_actions[2]["action"]
     # 10% to raise minimal
     elif actionProb > 55 and actionProb <= 65:
         raise_action_info = valid_actions[2]
@@ -131,7 +174,7 @@ def getPreFlopAction(valid_actions, hole_card, stack):
     return action, int(amount)
 
 
-def getPostFlopAction(valid_actions, hand, board, stack):
+def getPostFlopAction(valid_actions, hand, board, stack, last_action):
     evaluator = de.Evaluator()
     evaluation = evaluator.get_five_card_rank_percentage(evaluator.evaluate(hand, board))
     actionProb = (1-evaluation)*100
@@ -147,7 +190,8 @@ def getPostFlopAction(valid_actions, hand, board, stack):
         if valid_actions[1]["amount"] >= stack:
             action, amount = valid_actions[1]["action"], valid_actions[1]["amount"]
         else:
-            action, amount = valid_actions[2]["action"], stack
+            amount = valid_actions[1]["amount"] - last_action[1] + stack
+            action = valid_actions[2]["action"]
     # 10% to raise minimal
     elif actionProb > 55 and actionProb <= 65:
         raise_action_info = valid_actions[2]

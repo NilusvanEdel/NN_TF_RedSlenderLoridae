@@ -14,6 +14,12 @@ def start_poker(config, verbose=2):
     result_message = dealer.start_game(config.max_round)
     return _format_result(result_message)
 
+def start_poker_with_dealer(config, old_dealer, verbose=2):
+    dealer = old_dealer
+#    config.validation()
+    result_message = dealer.continue_round()
+    return _format_result(result_message)
+
 def _format_result(result_message):
     return {
             "rule": result_message["message"]["game_information"]["rule"],
