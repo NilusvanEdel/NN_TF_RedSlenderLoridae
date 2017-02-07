@@ -41,8 +41,19 @@ class GameEvaluator:
 
     active_players = [player for player in players if player.is_active()]
     score_with_players = [(score_player(player), player) for player in active_players]
-    best_score = max(score_with_players)[0]
-    winners = [s_p[1] for s_p in score_with_players if s_p[0] == best_score]
+    list_of_winners = []
+    best = 0
+    for i in range (len(score_with_players)):
+      if score_with_players[i][0] > best:
+        best = score_with_players[i][0]
+    for i in range(len(score_with_players)):
+      if score_with_players[i][0] == best:
+        list_of_winners.append(i)
+    winners = []
+    if (len(list_of_winners) > 1):
+      print("hier")
+    for i in range(len(list_of_winners)):
+      winners.append(score_with_players[i][1])
     return winners
 
   @classmethod

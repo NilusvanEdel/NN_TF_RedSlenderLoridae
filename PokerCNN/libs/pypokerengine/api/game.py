@@ -4,7 +4,7 @@ from pypokerengine.players import BasePokerPlayer
 def setup_config(max_round, initial_stack, small_blind_amount, ante=0):
     return Config(max_round, initial_stack, small_blind_amount, ante)
 
-def start_poker(config, verbose=2):
+def start_poker(config, verbose):
     config.validation()
     dealer = Dealer(config.sb_amount, config.initial_stack, config.ante)
     dealer.set_verbose(verbose)
