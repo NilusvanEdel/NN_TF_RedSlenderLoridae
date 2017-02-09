@@ -6,6 +6,7 @@ from heuristicPlayer import HeuristicPlayer
 import pickle
 import numpy as np
 import tensorflow as tf
+import glob
 
 # basically the HeuristicPlayer but this one will store the relevant data to train the neural network
 class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
@@ -31,6 +32,17 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                 if self.__save_state in acthis:
                     tensor = create_tensor(valid_actions, hole_card, round_state, self.__community_card,
                                self.__small_blind, self.__last_action)
+                    # save the current state to file
+                    # where to save the files, should be existing
+                    path = "/home/nilus/PycharmProjects/untitled/PokerCNN/"
+                    # the state to save
+                    state_to_save = self.__save_state
+                    # get the last saved file
+                    files = (glob.glob(path + state_to_save + "/save*.pickle"))
+                    last_number = int(files[-1].split('.pic')[0][-1])
+                    last_number += 1
+                    with open(path+state_to_save+"/save"+str(last_number)+".pickle", 'wb') as handle:
+                        pickle.dump(tensor, handle, protocol=pickle.HIGHEST_PROTOCOL)
                     result_of_moves = [0]*10
                     for i in range(10):
                         algorithm = TrainingsGenerator(self.__next_action+i+1, self.__save_state)
@@ -65,6 +77,9 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                         print("simulation over")
                         print("______________________________________________________________________")
                         '''
+                    # save the results to file
+                    with open(path+state_to_save+"/result"+str(last_number)+".pickle", 'wb') as handle:
+                        pickle.dump(result_of_moves, handle, protocol=pickle.HIGHEST_PROTOCOL)
             return HeuristicPlayer.bot_action(self, valid_actions, hole_card, round_state,
                                         dealer, self.__community_card, self.__stack, self.__last_action)
         else:
@@ -212,6 +227,7 @@ def create_tensor(valid_actions, hole_card, round_state, community_card, small_b
     tensor1 = tf.convert_to_tensor(hole_cards_arr)
     tensor2 = tf.convert_to_tensor(flop_cards_arr)
     tensor3 = tf.convert_to_tensor(turn_cards_arr)
+
     tensor4 = tf.convert_to_tensor(river_cards_arr)
     tensor5 = tf.convert_to_tensor(all_cards)
     tensor6 = tf.convert_to_tensor(amount_to_call_arr)
@@ -231,6 +247,9 @@ def create_tensor(valid_actions, hole_card, round_state, community_card, small_b
     # create a 9x17x17 of all of them
     full_tensor = [tensor1, tensor2, tensor3, tensor4, tensor5, tensor6, tensor7, tensor8, tensor9]
     full_tensor = tf.pack(full_tensor)
+    sess = tf.Session()
+    with sess.as_default():
+        full_tensor = full_tensor.eval()
     return full_tensor
 
 def get_index_of_card(card):
