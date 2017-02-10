@@ -38,8 +38,9 @@ class GameEvaluator:
   @classmethod
   def __find_winners_from(self, community_card, players):
     score_player = lambda player: HandEvaluator.eval_hand(player.hole_card, community_card)
-
     active_players = [player for player in players if player.is_active()]
+    # for x in active_players:
+     # print(x.name, "cards: ", x.hole_card[0], x.hole_card[1])
     score_with_players = [(score_player(player), player) for player in active_players]
     list_of_winners = []
     best = 0
@@ -50,10 +51,8 @@ class GameEvaluator:
       if score_with_players[i][0] == best:
         list_of_winners.append(i)
     winners = []
-    if (len(list_of_winners) > 1):
-      print("hier")
     for i in range(len(list_of_winners)):
-      winners.append(score_with_players[i][1])
+      winners.append(score_with_players[list_of_winners[i]][1])
     return winners
 
   @classmethod

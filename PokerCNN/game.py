@@ -18,4 +18,4 @@ for i in range (1):
     '''
     config.register_player(name="p8", algorithm=AllinPlayer())
     config.register_player(name="trainingsGenerator", algorithm=TrainingsGenerator(-1, state_to_save))
-    game_result = start_poker(config, verbose=1)
+    game_result = start_poker(config, verbose = 1)

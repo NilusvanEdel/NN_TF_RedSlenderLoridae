@@ -39,6 +39,7 @@ class Dealer:
       new_dealer.set_message_handler(copy.copy(self.message_handler))
       new_dealer.set_message_summarizer(copy.copy(self.message_summarizer))
       new_dealer.set_blind_structure(copy.copy(self.blind_structure))
+      new_dealer.set_verbose(copy.copy(self.message_summarizer.verbose))
       return new_dealer
 
   def register_player(self, player_name, algorithm):
@@ -54,7 +55,8 @@ class Dealer:
 
   def set_verbose(self, verbose):
       self.message_summarizer.verbose = verbose
-
+  def get_verbose(self):
+      return self.message_summarizer.verbose
   def start_game(self, max_round):
     table = self.table
     self.__notify_game_start(max_round)

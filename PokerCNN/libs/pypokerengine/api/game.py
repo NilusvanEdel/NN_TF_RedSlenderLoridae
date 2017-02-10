@@ -14,8 +14,9 @@ def start_poker(config, verbose):
     result_message = dealer.start_game(config.max_round)
     return _format_result(result_message)
 
-def start_poker_with_dealer(config, old_dealer, verbose=2):
+def start_poker_with_dealer(config, old_dealer, verbose):
     dealer = old_dealer
+    dealer.set_verbose(verbose)
 #    config.validation()
     result_message = dealer.continue_round()
     return _format_result(result_message)

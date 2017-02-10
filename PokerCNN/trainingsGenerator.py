@@ -25,9 +25,6 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
         ''' a backup of the current gamestate is created (all stored in the current dealer) and each possible
         round will be played once in this simulation and the result will be stored '''
         if self.__next_action == -1:
-            bu_dealer = dealer.copy()
-            config = setup_config(max_round=1, initial_stack=self.__initial_stack,
-                                  small_blind_amount=self.__small_blind)
             if round_state["action_histories"]:
                 acthis = round_state["action_histories"]
                 if self.__save_state in acthis:
@@ -48,12 +45,16 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                     with open(path+state_to_save+"/save"+str(last_number)+".pickle", 'wb') as handle:
                         pickle.dump(tensor, handle, protocol=pickle.HIGHEST_PROTOCOL)
                     result_of_moves = [0]*10
+
+                    bu_dealer = dealer.copy()
+                    config = setup_config(max_round=1, initial_stack=self.__initial_stack,
+                                          small_blind_amount=self.__small_blind)
                     print("______________________________________________________________________")
                     print("simulation_time")
                     for i in range(10):
                         algorithm = TrainingsGenerator(self.__next_action+i+1, self.__save_state)
                         bu_dealer.change_algorithm_of_player(self.uuid, algorithm)
-                        game_result = start_poker_with_dealer(config, dealer, verbose=0)
+                        game_result = start_poker_with_dealer(config, bu_dealer, verbose=0)
                         amount_win_loss = 0
                         for l in range(len(game_result["players"])):
                             if game_result["players"][l]["uuid"] == self.uuid:
@@ -62,18 +63,16 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                         if amount_win_loss < 0:
                             # normalized for loss (maximum the half of the whole chip size can be lost)
                             # loss is in range from 0 to 0.5
-                            print("HIER!!! ", amount_win_loss)
-                            normalized_result = amount_win_loss / self.__initial_stack \
-                                                * len(game_result["players"]) / 4 + 0.5
+                            normalized_result = amount_win_loss / (self.__stack * 2) + 0.5
                         if amount_win_loss > 0:
                             # normalized for win
                             # win is in range from 0.5 to 1
                             whole_stack = 0
                             for l in range(len(game_result["players"])):
                                 whole_stack += game_result["players"][l]["stack"]
-                            normalized_result = amount_win_loss / whole_stack * 2 + 0.5
+                                poss_win = whole_stack - self.__stack
+                            normalized_result = amount_win_loss / (poss_win * 2) + 0.5
                         result_of_moves[i] = normalized_result
-                        print("HIER: at ", i, " normalized result: ", normalized_result)
                     # save the results to file
                     print(result_of_moves)
                     print("simulation over")
