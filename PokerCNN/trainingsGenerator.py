@@ -6,6 +6,7 @@ from heuristicPlayer import HeuristicPlayer
 import pickle
 import numpy as np
 import tensorflow as tf
+import os.path
 import glob
 
 # basically the HeuristicPlayer but this one will store the relevant data to train the neural network
@@ -34,56 +35,55 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                                self.__small_blind, self.__last_action)
                     # save the current state to file
                     # where to save the files, should be existing
-                    path = "/home/nilus/PycharmProjects/untitled/PokerCNN/"
+                    path = "/home/nilus/PycharmProjects/pokerData/"
                     # the state to save
                     state_to_save = self.__save_state
                     # get the last saved file
-                    files = (glob.glob(path + state_to_save + "/save*.pickle"))
-                    last_number = int(files[-1].split('.pic')[0][-1])
-                    last_number += 1
+                    if (os.path.exists(path+state_to_save+"/save0.pickle")):
+                        files = (glob.glob(path + state_to_save + "/save*.pickle"))
+                        last_number = int(files[-1].split('.pic')[0][-1])
+                        last_number += 1
+                    else:
+                        last_number = 0
                     with open(path+state_to_save+"/save"+str(last_number)+".pickle", 'wb') as handle:
                         pickle.dump(tensor, handle, protocol=pickle.HIGHEST_PROTOCOL)
                     result_of_moves = [0]*10
+                    print("______________________________________________________________________")
+                    print("simulation_time")
                     for i in range(10):
                         algorithm = TrainingsGenerator(self.__next_action+i+1, self.__save_state)
                         bu_dealer.change_algorithm_of_player(self.uuid, algorithm)
-                        '''
-                        print("______________________________________________________________________")
-                        print("simulation_time")
-                        '''
                         game_result = start_poker_with_dealer(config, dealer, verbose=0)
                         amount_win_loss = 0
                         for l in range(len(game_result["players"])):
                             if game_result["players"][l]["uuid"] == self.uuid:
-                                if self.__stack > game_result["players"][l]["stack"]:
-                                    amount_win_loss = self.__stack - game_result["players"][l]["stack"]
-                                else:
-                                    amount_win_loss += game_result["players"][l]["stack"] - self.__stack
+                                amount_win_loss = game_result["players"][l]["stack"] - self.__stack
                         normalized_result = 0.5
                         if amount_win_loss < 0:
                             # normalized for loss (maximum the half of the whole chip size can be lost)
                             # loss is in range from 0 to 0.5
-                            normalized_result = amount_win_loss / self.__initial_stack * len(game_result["players"]) / 2
+                            print("HIER!!! ", amount_win_loss)
+                            normalized_result = amount_win_loss / self.__initial_stack \
+                                                * len(game_result["players"]) / 4 + 0.5
                         if amount_win_loss > 0:
                             # normalized for win
                             # win is in range from 0.5 to 1
                             whole_stack = 0
                             for l in range(len(game_result["players"])):
                                 whole_stack += game_result["players"][l]["stack"]
-                            normalized_result = amount_win_loss / whole_stack + 0.5
-                        # todo serialize this
+                            normalized_result = amount_win_loss / whole_stack * 2 + 0.5
                         result_of_moves[i] = normalized_result
-                        '''
-                        print("simulation over")
-                        print("______________________________________________________________________")
-                        '''
+                        print("HIER: at ", i, " normalized result: ", normalized_result)
                     # save the results to file
+                    print(result_of_moves)
+                    print("simulation over")
+                    print("______________________________________________________________________")
                     with open(path+state_to_save+"/result"+str(last_number)+".pickle", 'wb') as handle:
                         pickle.dump(result_of_moves, handle, protocol=pickle.HIGHEST_PROTOCOL)
             return HeuristicPlayer.bot_action(self, valid_actions, hole_card, round_state,
                                         dealer, self.__community_card, self.__stack, self.__last_action)
         else:
-            if 0 < self.__next_action < 9:
+            if 0 <= self.__next_action < 9:
                 action, amount = getAction(valid_actions, self.__stack,
                                            self.__last_action, self.__next_action)
                 self.__next_action = - 2
@@ -110,50 +110,39 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
         pass
 
     def receive_game_update_message(self, action, round_state):
-        self.__community_card = round_state["community_card"]
-        self.__stack = round_state["seats"][self.__positionInGameInfos]["stack"]
-        action = "call"
-        amount = "0"
-        if round_state["action_histories"]:
-            acthis = round_state["action_histories"]
-            if "preflop" in acthis:
-                count = len(acthis["preflop"])
-                for x in acthis["preflop"][::-1]:
-                    count -= 1
-                    if self.uuid in acthis["preflop"][count]:
-                        action = self.uuid in acthis["preflop"][count]["action"]
-                        amount = self.uuid in acthis["preflop"][count]["amount"]
-                        break
-                    break
-            if "flop" in acthis:
-                count = len(acthis["flop"])
-                for x in acthis["flop"][::-1]:
-                    count -= 1
-                    if self.uuid in acthis["flop"][count]:
-                        action = self.uuid in acthis["flop"][count]["action"]
-                        amount = self.uuid in acthis["flop"][count]["amount"]
-                        break
-                    break
-            if "turn" in acthis:
-                count = len(acthis["turn"])
-                for x in acthis["turn"][::-1]:
-                    count -= 1
-                    if self.uuid in acthis["turn"][count]:
-                        action = self.uuid in acthis["turn"][count]["action"]
-                        amount = self.uuid in acthis["turn"][count]["amount"]
-                        break
-                    break
-            if "river" in acthis:
-                count = len(acthis["river"])
-                for x in acthis["river"][::-1]:
-                    count -= 1
-                    if self.uuid in acthis["river"][count]:
-                        action = self.uuid in acthis["river"][count]["action"]
-                        amount = self.uuid in acthis["river"][count]["amount"]
-                        break
-                    break
-            self.__last_action = action, amount
-        pass
+        def receive_game_update_message(self, action, round_state):
+            self.__community_card = round_state["community_card"]
+            self.__stack = round_state["seats"][self.__positionInGameInfos]["stack"]
+            if round_state["action_histories"]:
+                acthis = round_state["action_histories"]
+                action = "call"
+                amount = 0
+                if "preflop" in acthis:
+                    for x in acthis["preflop"][::-1]:
+                        if self.uuid == x["uuid"]:
+                            action = x["action"]
+                            amount = x["amount"]
+                            break
+                if "flop" in acthis:
+                    for x in acthis["flop"][::-1]:
+                        if self.uuid == x["uuid"]:
+                            action = x["action"]
+                            amount = x["amount"]
+                            break
+                if "turn" in acthis:
+                    for x in acthis["turn"][::-1]:
+                        if self.uuid == x["uuid"]:
+                            action = x["action"]
+                            amount = x["amount"]
+                            break
+                if "river" in acthis:
+                    for x in acthis["river"][::-1]:
+                        if self.uuid == x["uuid"]:
+                            action = x["action"]
+                            amount = x["amount"]
+                            break
+                self.__last_action = action, amount
+            pass
 
     def receive_round_result_message(self, winners, hand_info, round_state):
         pass

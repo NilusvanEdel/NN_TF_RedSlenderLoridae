@@ -49,50 +49,38 @@ class HeuristicPlayer(BasePokerPlayer):  # Do not forget to make parent class as
         pass
 
     def receive_game_update_message(self, action, round_state):
-        self.__community_card = round_state["community_card"]
-        self.__stack = round_state["seats"][self.__positionInGameInfos]["stack"]
-        if round_state["action_histories"]:
-            acthis = round_state["action_histories"]
-            action = "call"
-            amount = 0
-            if "preflop" in acthis:
-                count = len(acthis["preflop"])
-                for x in acthis["preflop"][::-1]:
-                    count -= 1
-                    if self.uuid in acthis["preflop"][count]:
-                        action = self.uuid in acthis["preflop"][count]["action"]
-                        amount = self.uuid in acthis["preflop"][count]["amount"]
-                        break
-                    break
-            if "flop" in acthis:
-                count = len(acthis["flop"])
-                for x in acthis["flop"][::-1]:
-                    count -= 1
-                    if self.uuid in acthis["flop"][count]:
-                        action = self.uuid in acthis["flop"][count]["action"]
-                        amount = self.uuid in acthis["flop"][count]["amount"]
-                        break
-                    break
-            if "turn" in acthis:
-                count = len(acthis["turn"])
-                for x in acthis["turn"][::-1]:
-                    count -= 1
-                    if self.uuid in acthis["turn"][count]:
-                        action = self.uuid in acthis["turn"][count]["action"]
-                        amount = self.uuid in acthis["turn"][count]["amount"]
-                        break
-                    break
-            if "river" in acthis:
-                count = len(acthis["river"])
-                for x in acthis["river"][::-1]:
-                    count -= 1
-                    if self.uuid in acthis["river"][count]:
-                        action = self.uuid in acthis["river"][count]["action"]
-                        amount = self.uuid in acthis["river"][count]["amount"]
-                        break
-                    break
-            self.__last_action = action, amount
-
+        def receive_game_update_message(self, action, round_state):
+            self.__community_card = round_state["community_card"]
+            self.__stack = round_state["seats"][self.__positionInGameInfos]["stack"]
+            if round_state["action_histories"]:
+                acthis = round_state["action_histories"]
+                action = "call"
+                amount = 0
+                if "preflop" in acthis:
+                    for x in acthis["preflop"][::-1]:
+                        if self.uuid == x["uuid"]:
+                            action = x["action"]
+                            amount = x["amount"]
+                            break
+                if "flop" in acthis:
+                    for x in acthis["flop"][::-1]:
+                        if self.uuid == x["uuid"]:
+                            action = x["action"]
+                            amount = x["amount"]
+                            break
+                if "turn" in acthis:
+                    for x in acthis["turn"][::-1]:
+                        if self.uuid == x["uuid"]:
+                            action = x["action"]
+                            amount = x["amount"]
+                            break
+                if "river" in acthis:
+                    for x in acthis["river"][::-1]:
+                        if self.uuid == x["uuid"]:
+                            action = x["action"]
+                            amount = x["amount"]
+                            break
+                self.__last_action = action, amount
         pass
 
     def receive_round_result_message(self, winners, hand_info, round_state):
@@ -128,7 +116,6 @@ def getPreFlopAction(valid_actions, hole_card, stack, last_action):
         if valid_actions[1]["amount"] >= stack:
             action, amount = valid_actions[1]["action"], valid_actions[1]["amount"]
         else:
-            # no idea why there is sometimes a failure otherwise
             amount = valid_actions[1]["amount"] - int(last_action[1]) + stack
             action = valid_actions[2]["action"]
     # 10% to raise minimal
