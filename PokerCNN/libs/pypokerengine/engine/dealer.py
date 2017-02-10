@@ -6,6 +6,7 @@ from pypokerengine.engine.table import Table
 from pypokerengine.engine.player import Player
 from pypokerengine.engine.round_manager import RoundManager
 from pypokerengine.engine.message_builder import MessageBuilder
+import deuces as de
 
 class Dealer:
 
@@ -263,7 +264,19 @@ class MessageSummarizer(object):
         summaries = [self.summarize(raw_message[1]) for raw_message in raw_messages]
         summaries = [summary for summary in summaries if summary is not None]
         summaries = list(OrderedDict.fromkeys(summaries))
-        for summary in summaries: self.print_message(summary)
+        for summary in summaries:
+            if "community card" in summary:
+                test = summary.split("community card = ")
+                if (summary.split("community card = ")[-1]) != "[])":
+                    self.print_message(summary.split("(community card = ")[0])
+                    board = test[-1][1:][:-2]
+                    board = board.split(", ")
+                    for x in range(len(board)): board[x] = int(board[x])
+                    de.Card.print_pretty_cards(board)
+                else:
+                    self.print_message(summary)
+            else:
+                self.print_message(summary)
 
     def summarize(self, message):
         if self.verbose == 0: return None
@@ -295,7 +308,13 @@ class MessageSummarizer(object):
 
     def summarize_street_start(self, message):
         base = 'Street "%s" started. (community card = %s)'
-        return base % (message["street"], message["round_state"]["community_card"])
+        community_card = message["round_state"]["community_card"]
+        board = [None] * len(community_card)
+        for i in range(len(community_card)):
+            card = community_card[i][::-1]
+            card = card.replace(card[1], card[1].lower())
+            board[i] = de.Card.new(card)
+        return base % (message["street"], board)
 
     def summarize_player_action(self, message):
         base = '"%s" declared "%s:%s"'
