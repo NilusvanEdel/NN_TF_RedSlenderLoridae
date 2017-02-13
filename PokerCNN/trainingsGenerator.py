@@ -11,7 +11,7 @@ import glob
 
 # basically the HeuristicPlayer but this one will store the relevant data to train the neural network
 class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
-    def __init__(self, next_action, save_state):
+    def __init__(self, next_action, save_state, path, last_number):
         self.__community_card = []
         self.__stack = 0
         self.__positionInGameInfos = 0
@@ -20,6 +20,8 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
         self.__save_state = save_state
         self.__small_blind = 5
         self.__initial_stack = 100
+        self.__path = path
+        self.__last_number = last_number
 
     def declare_action(self, valid_actions, hole_card, round_state, dealer):
         ''' a backup of the current gamestate is created (all stored in the current dealer) and each possible
@@ -31,18 +33,9 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                     tensor = create_tensor(valid_actions, hole_card, round_state, self.__community_card,
                                self.__small_blind, self.__last_action)
                     # save the current state to file
-                    # where to save the files, should be existing
-                    path = "/home/nilus/PycharmProjects/pokerData/"
                     # the state to save
                     state_to_save = self.__save_state
-                    # get the last saved file
-                    if (os.path.exists(path+state_to_save+"/save0.pickle")):
-                        files = (glob.glob(path + state_to_save + "/save*.pickle"))
-                        last_number = int(files[-1].split('.pic')[0][-1])
-                        last_number += 1
-                    else:
-                        last_number = 0
-                    with open(path+state_to_save+"/save"+str(last_number)+".pickle", 'wb') as handle:
+                    with open(self.__path+state_to_save+"/save"+str(self.__last_number)+".pickle", 'wb') as handle:
                         pickle.dump(tensor, handle, protocol=pickle.HIGHEST_PROTOCOL)
                     result_of_moves = [0]*10
 
@@ -52,7 +45,8 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                     print("______________________________________________________________________")
                     print("simulation_time")
                     for i in range(10):
-                        algorithm = TrainingsGenerator(self.__next_action+i+1, self.__save_state)
+                        algorithm = TrainingsGenerator(self.__next_action+i+1, self.__save_state,
+                                                       self.__path, self.__last_number)
                         bu_dealer.change_algorithm_of_player(self.uuid, algorithm)
                         game_result = start_poker_with_dealer(config, bu_dealer, verbose=0)
                         amount_win_loss = 0
@@ -77,7 +71,7 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                     print(result_of_moves)
                     print("simulation over")
                     print("______________________________________________________________________")
-                    with open(path+state_to_save+"/result"+str(last_number)+".pickle", 'wb') as handle:
+                    with open(self.__path+state_to_save+"/result"+str(self.__last_number)+".pickle", 'wb') as handle:
                         pickle.dump(result_of_moves, handle, protocol=pickle.HIGHEST_PROTOCOL)
             return HeuristicPlayer.bot_action(self, valid_actions, hole_card, round_state,
                                         dealer, self.__community_card, self.__stack, self.__last_action)
