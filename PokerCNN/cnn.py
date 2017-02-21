@@ -89,7 +89,7 @@ def get_results(state):
         print("last_number results: ", last_number)
         result = []
         for i in range(last_number):
-            with open(path + state + "/result" + str(last_number) + ".pickle", 'rb') as handle:
+            with open(path + state + "/result" + str(i) + ".pickle", 'rb') as handle:
                 result.append(pickle.load(handle))
     else:
         raise ValueError('Data could not dbe found')
@@ -189,7 +189,8 @@ x_tensor = tf.reshape(x, [-1, slice_size, slice_size, depth, 1])
 
 # OUTPUT
 y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
-# y_true_cls = tf.argmax(y_true, dimension=1)
+# test = tf.unpack(y_true)
+y_true_cls = tf.argmax(y_true, dimension=1)
 
 ### Create Layers###
 # Conv 1
@@ -224,20 +225,21 @@ layer_fc2 = new_fc_layer(input=layer_fc1,
 
 # use softmax to normalize
 y_pred = tf.nn.softmax(layer_fc2)
-y_pred_cls = tf.argmax(y_pred, dimension=1)
+# y_pred_cls = tf.argmax(y_pred, dimension=0)
 
 ### Cost function for backprop ####
 # Calculate cross-entropy first
-cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2,
-                                                        labels=y_true)
+# cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2,
+                                                        # labels=y_true)
 # change name
-# cross_entropy = tf.sqrt(tf.reduce_mean(tf.square(tf.sub(y_true, layer_fc2))))
+cross_entropy = tf.sqrt(tf.reduce_mean(tf.square(tf.sub(y_true, layer_fc2))))
 
 # This yields the cost:
 cost = tf.reduce_mean(cross_entropy)
 
 ### Optimization using adamoptimizer
-optimizer = tf.train.AdamOptimizer(learning_rate=0.5).minimize(cost)
+optimizer = tf.train.MomentumOptimizer(learning_rate=0.02, momentum=0.0,
+                                   use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
 
 ### Performace measures ###
 # correct_prediction = tf.equal(y_pred_cls, y_true_cls)
@@ -252,7 +254,6 @@ if y_pred_cls in best_results:
 else: correct_prediction = 0
 '''
 correct_prediction = 0
-test = tf.argmax(y_true, dimension=1)
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 ### start the session ###
@@ -269,26 +270,22 @@ with tf.Session() as session:
     all_labels = get_results("preflop")
     data_batch = []
     labels_batch = []
-    print(all_labels[0])
-    for i in range(0, 10):
-        data_batch.append(all_data[i].flatten())
-        labels_batch.append(all_labels[i])
-    for l in range(2):
-        data = data_batch
-        labels = labels_batch
+    for l in range(250):
+        data = [all_data[l].flatten()]
+        labels = [all_labels[l]]
         # create a dummy feed dict. Works similarly when using a bigger dataset
         feed_dict_train = {x: data, y_true: labels}
         # run the network
         session.run(optimizer, feed_dict=feed_dict_train)
         # Calculate the accuracy on the training-set.
-        acc = session.run(accuracy, feed_dict=feed_dict_train)
+        cost_h = session.run(cost, feed_dict=feed_dict_train)
         output = session.run(layer_fc2, feed_dict=feed_dict_train)
-        cost_out = session.run(cost, feed_dict=feed_dict_train)
-        print(output)
-        print(cost_out)
+        y_test = session.run(y_true, feed_dict=feed_dict_train)
+        if (l%10 == 0):
+            print("own: ", output[0])
+            print("y_ :", y_test[0])
         # Message for printing
-        msg = "Optimization Iteration: {0:>6}, Training Accuracy: {1:>6.1%}"
+        msg = "Optimization Iteration: {0:>6}, cost: {1:>6.4}"
 
         # Print it
-        print(msg.format(l, acc))
-
+        print(msg.format(l, cost_h))
