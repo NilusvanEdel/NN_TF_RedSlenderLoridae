@@ -238,7 +238,7 @@ cross_entropy = tf.sqrt(tf.reduce_mean(tf.square(tf.sub(y_true, layer_fc2))))
 cost = tf.reduce_mean(cross_entropy)
 
 ### Optimization using adamoptimizer
-optimizer = tf.train.MomentumOptimizer(learning_rate=0.02, momentum=0.0,
+optimizer = tf.train.MomentumOptimizer(learning_rate=0.02, momentum=1.0,
                                    use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
 
 ### Performace measures ###
@@ -270,7 +270,9 @@ with tf.Session() as session:
     all_labels = get_results("preflop")
     data_batch = []
     labels_batch = []
-    for l in range(250):
+    sum = 0
+    sum_w = 0
+    for l in range(1000):
         data = [all_data[l].flatten()]
         labels = [all_labels[l]]
         # create a dummy feed dict. Works similarly when using a bigger dataset
@@ -281,11 +283,37 @@ with tf.Session() as session:
         cost_h = session.run(cost, feed_dict=feed_dict_train)
         output = session.run(layer_fc2, feed_dict=feed_dict_train)
         y_test = session.run(y_true, feed_dict=feed_dict_train)
+        best_outputs = []
+        best_original = []
+        winning_move = []
+        max_output = max(output[0])
+        max_original = max(y_test[0])
+        for i in range(len(output[0])):
+            if output[0][i] == max_output:
+                best_outputs.append(i)
+            if y_test[0][i] == max_original:
+                best_original.append(i)
+                winning_move.append(i)
+            else:
+                if y_test[0][i] > 0.5:
+                    winning_move.append(i)
+        right_move_predicted = False
+        winning_move_predicted = False
+        if len(best_outputs) == 1:
+            if best_outputs[0] in best_original: right_move_predicted = True
+            if best_outputs[0] in winning_move: winning_move_predicted = True
+        else:
+            if best_outputs[:] in best_original: right_move_predicted = True
+            if best_outputs[:] in winning_move: winning_move_predicted = True
         if (l%10 == 0):
             print("own: ", output[0])
             print("y_ :", y_test[0])
+        if right_move_predicted and l > 800: sum +=1
+        if winning_move_predicted and l > 800: sum_w += 1
         # Message for printing
-        msg = "Optimization Iteration: {0:>6}, cost: {1:>6.4}"
+        msg = "Optimization Iteration: {0:>6}, cost: {1:>6.4}, Best move?: {2:>2}"
 
         # Print it
-        print(msg.format(l, cost_h))
+        print(msg.format(l, cost_h, right_move_predicted))
+    print("validation_performance_best_moves:", sum/200, "%")
+    print("validation_performance_winning_moves:", sum_w / 200, "%")
