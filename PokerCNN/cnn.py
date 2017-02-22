@@ -12,7 +12,7 @@ import glob
 ### Set Layer Options ###
 
 # Convolutional Layer 1.
-filter_size1 = 5  # Convolution filters are 5 x 5 pixels.
+filter_size1 = 3  # Convolution filters are 3 x 3 pixels.
 num_filters1 = 30  # There are 30 of these filters.
 
 # Convolutional Layer 2.
@@ -60,13 +60,13 @@ def new_biases(length):
 
 def get_data(state):
     # path needs to be updated
-    path = "/home/nilus/PycharmProjects/pokerData/"
+    path = "/media/nilus/INTENSO/pokerData/"
     if (os.path.exists(path + state + "/save0.pickle")):
         files = (glob.glob(path + state + "/save*.pickle"))
         last_number = []
         for l in range(len(files)):
             last_number.append(int(files[l].split('.pic')[0].split('save')[-1]))
-        last_number = max(last_number) - 1
+        last_number = max(last_number)
         data = []
         print("last_number: ", last_number)
         for i in range(last_number):
@@ -79,7 +79,7 @@ def get_data(state):
 
 def get_results(state):
     # path needs to be updated
-    path = "/home/nilus/PycharmProjects/pokerData/"
+    path = "/media/nilus/INTENSO/pokerData/"
     if (os.path.exists(path + state + "/result0.pickle")):
         files = (glob.glob(path + state + "/result*.pickle"))
         last_number = []
@@ -94,6 +94,17 @@ def get_results(state):
     else:
         raise ValueError('Data could not dbe found')
     return result
+
+
+def get_batch(data, labels, size):
+    batch = []
+    batch_labels = []
+    for t in range(size):
+        no = np.random.randint(0, len(data))
+        batch.append(data[no].flatten())
+        batch_labels.append(labels[no])
+    return batch, batch_labels
+
 
 ### Helper to create new conv layer ###
 
@@ -223,38 +234,41 @@ layer_fc2 = new_fc_layer(input=layer_fc1,
                          num_outputs=num_classes,
                          use_relu=False)
 
-# use softmax to normalize
-y_pred = tf.nn.softmax(layer_fc2)
-# y_pred_cls = tf.argmax(y_pred, dimension=0)
-
 ### Cost function for backprop ####
 # Calculate cross-entropy first
 # cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2,
                                                         # labels=y_true)
 # change name
-cross_entropy = tf.sqrt(tf.reduce_mean(tf.square(tf.sub(y_true, layer_fc2))))
+mean_sq_error = tf.squared_difference(layer_fc2, y_true)
 
 # This yields the cost:
-cost = tf.reduce_mean(cross_entropy)
+cost = tf.reduce_mean(mean_sq_error)
 
-### Optimization using adamoptimizer
-optimizer = tf.train.MomentumOptimizer(learning_rate=0.02, momentum=1.0,
+### Optimization using nesterov momentum
+optimizer = tf.train.MomentumOptimizer(learning_rate=0.4, momentum=0.2,
                                    use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
 
 ### Performace measures ###
-# correct_prediction = tf.equal(y_pred_cls, y_true_cls)
-# correct_prediction = tf.equal(layer_fc2, y_true)
-'''
-best_results = []
-for i in range(len(y_true.eval())):
-    if y_true[i] == max(y_true):
-        best_results.add(i)
-if y_pred_cls in best_results:
-    correct_prediction = 1
-else: correct_prediction = 0
-'''
-correct_prediction = 0
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+def get_accuracy(output, label):
+    correct_prediction = 0
+    for i in range(len(output)):
+        best_outputs = []
+        best_original = []
+        max_output = max(output[i])
+        max_original = max(label[i])
+        for s in range(len(output[i])):
+            if output[i][s] == max_output:
+                best_outputs.append(s)
+            if label[i][s] == max_original:
+                best_original.append(s)
+        if len(best_outputs) == 1:
+            if best_outputs[0] in best_original:
+                correct_prediction += 1
+        else:
+            if best_outputs[:] in best_original:
+                correct_prediction += 1
+    accuracy = correct_prediction/len(label)
+    return accuracy
 
 ### start the session ###
 
@@ -268,52 +282,39 @@ with tf.Session() as session:
     # Format: [data1, data2, ... ] , [label1, label2, ...]. data: 3d array, label: 1d array length 10
     all_data = get_data("preflop")
     all_labels = get_results("preflop")
-    data_batch = []
-    labels_batch = []
-    sum = 0
-    sum_w = 0
-    for l in range(1000):
-        data = [all_data[l].flatten()]
-        labels = [all_labels[l]]
+    data = all_data[0:int(len(all_data)*0.8)]
+    labels = all_labels[0:int(len(all_labels)*0.8)]
+    test_data = all_data[int(len(all_data)*0.8):len(all_data)]
+    test_labels = all_labels[int(len(all_labels)*0.8):len(all_labels)]
+    for l in range(50):
+        data_batch, labels_batch = get_batch(data, labels, 20)
         # create a dummy feed dict. Works similarly when using a bigger dataset
-        feed_dict_train = {x: data, y_true: labels}
+        feed_dict_train = {x: data_batch, y_true: labels_batch}
         # run the network
         session.run(optimizer, feed_dict=feed_dict_train)
         # Calculate the accuracy on the training-set.
         cost_h = session.run(cost, feed_dict=feed_dict_train)
-        output = session.run(layer_fc2, feed_dict=feed_dict_train)
-        y_test = session.run(y_true, feed_dict=feed_dict_train)
-        best_outputs = []
-        best_original = []
-        winning_move = []
-        max_output = max(output[0])
-        max_original = max(y_test[0])
-        for i in range(len(output[0])):
-            if output[0][i] == max_output:
-                best_outputs.append(i)
-            if y_test[0][i] == max_original:
-                best_original.append(i)
-                winning_move.append(i)
-            else:
-                if y_test[0][i] > 0.5:
-                    winning_move.append(i)
-        right_move_predicted = False
-        winning_move_predicted = False
-        if len(best_outputs) == 1:
-            if best_outputs[0] in best_original: right_move_predicted = True
-            if best_outputs[0] in winning_move: winning_move_predicted = True
-        else:
-            if best_outputs[:] in best_original: right_move_predicted = True
-            if best_outputs[:] in winning_move: winning_move_predicted = True
-        if (l%10 == 0):
-            print("own: ", output[0])
-            print("y_ :", y_test[0])
-        if right_move_predicted and l > 800: sum +=1
-        if winning_move_predicted and l > 800: sum_w += 1
         # Message for printing
-        msg = "Optimization Iteration: {0:>6}, cost: {1:>6.4}, Best move?: {2:>2}"
+        if l % 10 == 0:
+            output = session.run(layer_fc2, feed_dict=feed_dict_train)
+            or_labels = session.run(y_true, feed_dict=feed_dict_train)
+            print(output[0])
+            print(or_labels[0])
+            print("________________________________________")
+            print(output[1])
+            print(or_labels[1])
+            acc = get_accuracy(output, or_labels)
+            msg = "Optimization Iteration: {0:>6}, cost: {1:>6.4}, accuracy: {2:>2}"
+            # Print it
+            print(msg.format(l, cost_h, acc))
+        else:
+            msg = "Optimization Iteration: {0:>6}, cost: {1:>6.4}"
+            # Print it
+            print(msg.format(l, cost_h))
 
-        # Print it
-        print(msg.format(l, cost_h, right_move_predicted))
-    print("validation_performance_best_moves:", sum/200, "%")
-    print("validation_performance_winning_moves:", sum_w / 200, "%")
+    data_test, labels_test = get_batch(test_data, test_labels, 100)
+    feed_dict_test = {x:data_test, y_true:labels_test}
+    or_labels = session.run(y_true, feed_dict=feed_dict_test)
+    output = session.run(layer_fc2, feed_dict=feed_dict_test)
+    test_accuracy = get_accuracy(output, or_labels)
+    print ("Test accuracy: ", test_accuracy)

@@ -9,18 +9,21 @@ import glob
 import sys
 import random
 state_to_save = "preflop"
-path = "/home/nilus/PycharmProjects/pokerData/"
+path = "/media/nilus/INTENSO/pokerData/"
     #get the last saved file
+'''
 if (os.path.exists(path + state_to_save + "/save0.pickle")):
     files = (glob.glob(path + state_to_save + "/save*.pickle"))
     print("dafuq: ", files)
-    last_number = []
+    # last_number = []
     for l in range(len(files)):
         last_number.append(int(files[l].split('.pic')[0].split('save')[-1]))
     last_number = max(last_number) + 1
 else:
     last_number = 0
-for i in range(200):
+    '''
+last_number = 1001
+for i in range(50):
     config = setup_config(max_round=1, initial_stack=100, small_blind_amount=5)
     '''
     config.register_player(name="heuristic", algorithm=HeuristicPlayer())
