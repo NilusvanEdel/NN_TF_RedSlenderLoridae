@@ -16,6 +16,8 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
         self.__stack = 0
         self.__positionInGameInfos = 0
         self.__last_action = ["call", 0]
+        # important for recursive call if =-1 it has to save the next moves, otherwise it will perform
+        # the given avtion and return the result
         self.__next_action = next_action
         self.__save_state = save_state
         self.__small_blind = 5
@@ -26,7 +28,8 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
     def declare_action(self, valid_actions, hole_card, round_state, dealer):
         ''' a backup of the current gamestate is created (all stored in the current dealer) and each possible
         round will be played once in this simulation and the result will be stored '''
-        if self.__next_action == -1:
+        if self.__next_action == -1: # still needs to save the states
+            # check if state to save has come (preflop/flop/ etc.)
             if round_state["action_histories"]:
                 acthis = round_state["action_histories"]
                 if self.__save_state in acthis:
@@ -38,17 +41,22 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                     with open(self.__path+state_to_save+"/save"+str(self.__last_number)+".pickle", 'wb') as handle:
                         pickle.dump(tensor, handle, protocol=pickle.HIGHEST_PROTOCOL)
                     result_of_moves = [0]*10
-
+                    # backup of the current game_state
                     bu_dealer = dealer.copy()
                     config = setup_config(max_round=1, initial_stack=self.__initial_stack,
                                           small_blind_amount=self.__small_blind)
                     print("______________________________________________________________________")
                     print("simulation_time")
+                    # start the simluation of the 10 moves
                     for i in range(10):
+                        # recursive call of trainings generator with iterative increase of next action
                         algorithm = TrainingsGenerator(self.__next_action+i+1, self.__save_state,
                                                        self.__path, self.__last_number)
+                        # changes the used algorithm in game to the "new" trainings_gen algorithm
                         bu_dealer.change_algorithm_of_player(self.uuid, algorithm)
+                        # play the game
                         game_result = start_poker_with_dealer(config, bu_dealer, verbose=0)
+                        # get the result and normalize it
                         amount_win_loss = 0
                         for l in range(len(game_result["players"])):
                             if game_result["players"][l]["uuid"] == self.uuid:
@@ -73,8 +81,10 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                     print("______________________________________________________________________")
                     with open(self.__path+state_to_save+"/result"+str(self.__last_number)+".pickle", 'wb') as handle:
                         pickle.dump(result_of_moves, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            # use the heuristic bot for other actions (if next_action =-1 and state to save not reached yet)
             return HeuristicPlayer.bot_action(self, valid_actions, hole_card, round_state,
                                         dealer, self.__community_card, self.__stack, self.__last_action)
+        # if next=action != -1 and state to save (preflop/flop/...) is reached
         else:
             if 0 <= self.__next_action < 9:
                 action, amount = getAction(valid_actions, self.__stack,
@@ -84,7 +94,7 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
             else:
                 return HeuristicPlayer.bot_action(self, valid_actions, hole_card,
                                 round_state, dealer, self.__community_card, self.__stack, self.__last_action)
-
+    # initialize the variables with the variables given by the game_engine
     def receive_game_start_message(self, game_info):
         for i in range(len(game_info["seats"])):
             if game_info["seats"][i]["uuid"] == self.uuid:
@@ -94,6 +104,7 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
         self.__initial_stack = game_info["rule"]["initial_stack"]
         pass
 
+    # change the variables in accordance to the new sate (provided by the game engine)
     def receive_round_start_message(self, round_count, hole_card, seats):
         self.__community_card = []
         self.__last_action = ["call", 0]
@@ -102,10 +113,12 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
     def receive_street_start_message(self, street, round_state):
         pass
 
+    # change the variables in accordance to the new sate (provided by the game engine)
     def receive_game_update_message(self, action, round_state):
         def receive_game_update_message(self, action, round_state):
             self.__community_card = round_state["community_card"]
             self.__stack = round_state["seats"][self.__positionInGameInfos]["stack"]
+            " get your last action, important in order to bet correctly, if you bet too much you will simply fold"
             if round_state["action_histories"]:
                 acthis = round_state["action_histories"]
                 action = "call"
@@ -140,7 +153,7 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
     def receive_round_result_message(self, winners, hand_info, round_state):
         pass
 
-
+# create the save_state tensor(will be a np.array in the end)
 def create_tensor(valid_actions, hole_card, round_state, community_card, small_blind, last_action):
     # write cards in array
     ind_of_card_one = get_index_of_card(hole_card[0])
@@ -216,7 +229,7 @@ def create_tensor(valid_actions, hole_card, round_state, community_card, small_b
     tensor7 = tf.convert_to_tensor(mainpot_arr)
     tensor8 = tf.convert_to_tensor(dealer_btn_arr)
     tensor9 = tf.convert_to_tensor(players_active_arr)
-    # zeropad all of them to 17x17
+    # zeropad all of them to 17x17 <-- important that it is a tensor
     tensor1 = tf.pad(tensor1, [[2, 2], [6, 7]], "CONSTANT")
     tensor2 = tf.pad(tensor2, [[2, 2], [6, 7]], "CONSTANT")
     tensor3 = tf.pad(tensor3, [[2, 2], [6, 7]], "CONSTANT")
@@ -234,6 +247,8 @@ def create_tensor(valid_actions, hole_card, round_state, community_card, small_b
         full_tensor = full_tensor.eval()
     return full_tensor
 
+
+# what is the card written as index of the array above
 def get_index_of_card(card):
     ind_of_card = [0, 0]
     if card[0] == "S":
@@ -257,62 +272,56 @@ def get_index_of_card(card):
     return ind_of_card
 
 
+# returns the action as wanted by the game_engine correspondant to your chosen action (0-9)
+# important: the game engine wants your actual bet in the end, if you already used to bet e.g. 100 and now need
+# to call a bet of 300, it wants {action: call, amount:300} <-- not 200, hence important to keep track of your history
 def getAction(valid_actions, stack, last_action, action):
     if action <= 0:
         fold_action_info = valid_actions[0]
         action, amount = fold_action_info["action"], fold_action_info["amount"]
-    # 45% call or if no raise is possible anymore
     elif action == 1:
         call_action_info = valid_actions[1]
         action, amount = call_action_info["action"], call_action_info["amount"]
-    # no simple raise possible anymore
+    # no simple raise possible anymore the game engine provides the amount=-1 for the action raise
     elif valid_actions[2]["amount"]["min"] == -1:
         if valid_actions[1]["amount"] >= stack:
             action, amount = valid_actions[1]["action"], valid_actions[1]["amount"]
         else:
             amount = valid_actions[1]["amount"] - int(last_action[1]) + stack
             action = valid_actions[2]["action"]
-    # 10% to raise minimal
     elif action == 2:
         raise_action_info = valid_actions[2]
         action, amount = raise_action_info["action"], raise_action_info["amount"]["min"]
-    # 5% to raise 1,5x
     elif action == 3:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
         amount = (raise_action_info["amount"]["min"] - amount_call_action) * 1.5 + amount_call_action
-    # 5% to raise 2x
     elif action == 4:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
         amount = (raise_action_info["amount"]["min"] - amount_call_action) * 2 + amount_call_action
-    # 5% to raise 3x
     elif action == 5:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
         amount = (raise_action_info["amount"]["min"] - amount_call_action) * 3 + amount_call_action
-    # 5% to raise 5x
     elif action == 6:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
         amount = (raise_action_info["amount"]["min"] - amount_call_action) * 5 + amount_call_action
-    # 5% to raise 10x
     elif action == 7:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
         amount = (raise_action_info["amount"]["min"] - amount_call_action) * 10 + amount_call_action
-    # 5% to raise 25x
     elif action == 8:
         raise_action_info = valid_actions[2]
         amount_call_action = valid_actions[1]["amount"]
         action = raise_action_info["action"]
         amount = (raise_action_info["amount"]["min"] - amount_call_action) * 25 + amount_call_action
-    # 5% to go all-in
     else:
         raise_action_info = valid_actions[2]
         action, amount = raise_action_info["action"], raise_action_info["amount"]["max"]

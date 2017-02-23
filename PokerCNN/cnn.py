@@ -90,7 +90,11 @@ def get_results(state):
         result = []
         for i in range(last_number):
             with open(path + state + "/result" + str(i) + ".pickle", 'rb') as handle:
-                result.append(pickle.load(handle))
+                or_data = pickle.load(handle)
+                index = or_data.index(max(or_data))
+                changed_result = [0]*len(or_data)
+                changed_result[index] = 1
+                result.append((changed_result))
     else:
         raise ValueError('Data could not dbe found')
     return result
@@ -234,21 +238,27 @@ layer_fc2 = new_fc_layer(input=layer_fc1,
                          num_outputs=num_classes,
                          use_relu=False)
 
+# use softmax to normalize
+y_pred = tf.nn.softmax(layer_fc2)
+y_pred_cls = tf.argmax(y_pred, dimension=1)
+
 ### Cost function for backprop ####
 # Calculate cross-entropy first
-# cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2,
-                                                        # labels=y_true)
-# change name
-mean_sq_error = tf.squared_difference(layer_fc2, y_true)
+cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2,
+                                                        labels=y_true)
 
 # This yields the cost:
-cost = tf.reduce_mean(mean_sq_error)
+cost = tf.reduce_mean(cross_entropy)
 
-### Optimization using nesterov momentum
-optimizer = tf.train.MomentumOptimizer(learning_rate=0.4, momentum=0.2,
+### Optimization
+optimizer = tf.train.MomentumOptimizer(learning_rate=0.02, momentum=0.05,
                                    use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
+# tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
 
 ### Performace measures ###
+correct_prediction = tf.equal(y_pred_cls, y_true_cls)
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+'''
 def get_accuracy(output, label):
     correct_prediction = 0
     for i in range(len(output)):
@@ -269,7 +279,8 @@ def get_accuracy(output, label):
                 correct_prediction += 1
     accuracy = correct_prediction/len(label)
     return accuracy
-
+    return 0
+'''
 ### start the session ###
 
 with tf.Session() as session:
@@ -277,7 +288,6 @@ with tf.Session() as session:
 
     ### NOW WE NEED ACTUAL DATA AND STUFF - THIS IS SKIPPED FOR NOW
     ### FIRST TEST WITH TEST DATA
-
     # Needed here is: A loop, in which batches of train data + labels are retrieved (best by a helper script)
     # Format: [data1, data2, ... ] , [label1, label2, ...]. data: 3d array, label: 1d array length 10
     all_data = get_data("preflop")
@@ -286,35 +296,33 @@ with tf.Session() as session:
     labels = all_labels[0:int(len(all_labels)*0.8)]
     test_data = all_data[int(len(all_data)*0.8):len(all_data)]
     test_labels = all_labels[int(len(all_labels)*0.8):len(all_labels)]
-    for l in range(50):
-        data_batch, labels_batch = get_batch(data, labels, 20)
+    for l in range(100):
+        data_batch, labels_batch = get_batch(data, labels, 50)
         # create a dummy feed dict. Works similarly when using a bigger dataset
         feed_dict_train = {x: data_batch, y_true: labels_batch}
         # run the network
         session.run(optimizer, feed_dict=feed_dict_train)
         # Calculate the accuracy on the training-set.
-        cost_h = session.run(cost, feed_dict=feed_dict_train)
+        acc = session.run(accuracy, feed_dict=feed_dict_train)
         # Message for printing
         if l % 10 == 0:
-            output = session.run(layer_fc2, feed_dict=feed_dict_train)
+            output = session.run(y_true_cls, feed_dict=feed_dict_train)
             or_labels = session.run(y_true, feed_dict=feed_dict_train)
+            # sm_sp_digits = session.run(sm_ce_sp_digits, feed_dict=feed_dict_train)
             print(output[0])
             print(or_labels[0])
-            print("________________________________________")
-            print(output[1])
-            print(or_labels[1])
-            acc = get_accuracy(output, or_labels)
-            msg = "Optimization Iteration: {0:>6}, cost: {1:>6.4}, accuracy: {2:>2}"
-            # Print it
-            print(msg.format(l, cost_h, acc))
-        else:
-            msg = "Optimization Iteration: {0:>6}, cost: {1:>6.4}"
-            # Print it
-            print(msg.format(l, cost_h))
+        msg = "Optimization Iteration: {0:>6}, Accuracy: {1:>6.4}"
+        # Print it
+        print(msg.format(l, acc))
 
-    data_test, labels_test = get_batch(test_data, test_labels, 100)
-    feed_dict_test = {x:data_test, y_true:labels_test}
+    feed_dict_test = {x:test_data, y_true:test_labels}
     or_labels = session.run(y_true, feed_dict=feed_dict_test)
-    output = session.run(layer_fc2, feed_dict=feed_dict_test)
-    test_accuracy = get_accuracy(output, or_labels)
-    print ("Test accuracy: ", test_accuracy)
+    output = session.run(y_pred, feed_dict=feed_dict_test)
+    test_accuracy = session.run(accuracy, feed_dict=feed_dict_test)
+    print("Labels: ")
+    print(or_labels[0])
+    print(or_labels[len(test_data)])
+    print("result: ")
+    print(output[0])
+    print(output[len(test_labels)])
+    print("Accuracy: ", test_accuracy)
