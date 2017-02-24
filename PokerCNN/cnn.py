@@ -8,18 +8,23 @@ import math
 import pickle
 import os.path
 import glob
-
 ### Set Layer Options ###
 
 # Convolutional Layer 1.
-filter_size1 = 5  # Convolution filters are 3 x 3 pixels.
-num_filters1 = 40
+filter_size1 = 3  # Convolution filters are 3 x 3 pixels.
+num_filters1 = 20
 # Convolutional Layer 2.
-filter_size2 = 3  # Convolution filters are 5 x 5 pixels.
-num_filters2 = 20  # There are 50 of these filters.
+filter_size2 = 3  # Convolution filters are 3 x 3 pixels.
+num_filters2 = 20  # There are 30 of these filters.
+# Convolutional Layer 3.
+filter_size3 = 3  # Convolution filters are 3 x 3 Pixels
+num_filters3 = 20
+# Convolutional Layer 4.
+filter_size4 = 3
+num_filters4 = 20
 
 # Fully-connected layer.
-fc_size = 50# Number of neurons in fully-connected layer.
+fc_size = 128# Number of neurons in fully-connected layer.
 
 ### Define data dimensions ###
 
@@ -27,7 +32,7 @@ fc_size = 50# Number of neurons in fully-connected layer.
 slice_size = 17
 
 # Size for the depth
-depth = 9
+depth = 1
 
 # (Results in 17x17x9 later)
 
@@ -59,7 +64,7 @@ def new_biases(length):
 
 def get_data(state):
     # path needs to be updated
-    path = "pokerData/"
+    path = "/media/nilus/INTENSO/pokerData/"
     if (os.path.exists(path + state + "/save0.pickle")):
         files = (glob.glob(path + state + "/save*.pickle"))
         last_number = []
@@ -70,7 +75,8 @@ def get_data(state):
         print("last_number: ", last_number)
         for i in range(last_number):
             with open(path + state + "/save" + str(i) + ".pickle", 'rb') as handle:
-                data.append(pickle.load(handle))
+                or_data = pickle.load(handle)
+                data.append(or_data[0])
     else:
         raise ValueError('Data could not be found')
     return data
@@ -78,7 +84,7 @@ def get_data(state):
 
 def get_results(state):
     # path needs to be updated
-    path = "pokerData/"
+    path = "/media/nilus/INTENSO/pokerData/"
     if (os.path.exists(path + state + "/result0.pickle")):
         files = (glob.glob(path + state + "/result*.pickle"))
         last_number = []
@@ -89,11 +95,7 @@ def get_results(state):
         result = []
         for i in range(last_number):
             with open(path + state + "/result" + str(i) + ".pickle", 'rb') as handle:
-                or_data = pickle.load(handle)
-                index = or_data.index(max(or_data))
-                changed_result = [0]*len(or_data)
-                changed_result[index] = 1
-                result.append((changed_result))
+                result.append(pickle.load(handle))
     else:
         raise ValueError('Data could not dbe found')
     return result
@@ -147,7 +149,7 @@ def new_conv_layer(input,  # The previous layer.
                                  padding='SAME')
 
     #Use a RELU at the end
-    layer = tf.nn.relu(layer)
+    # layer = tf.nn.relu(layer)
 
 
     # Return the new layer and the weights
@@ -177,7 +179,7 @@ def flatten_layer(layer):
 def new_fc_layer(input,  # The previous layer.
                  num_inputs,  # Num. inputs from prev. layer.
                  num_outputs,  # Num. outputs.
-                 use_relu=True):  # Use Rectified Linear Unit (ReLU)?
+                 use_relu=False):  # Use Rectified Linear Unit (ReLU)?
 
     # Create new weights and biases.
     weights = new_weights(shape=[num_inputs, num_outputs])
@@ -213,7 +215,7 @@ layer_conv1, weights_conv1 = new_conv_layer(input=x_tensor,
                                             num_input_channels=1,
                                             filter_size=filter_size1,
                                             num_filters=num_filters1,
-                                            use_pooling=True)
+                                            use_pooling=False)
 # conv 2
 layer_conv2, weights_conv2 = new_conv_layer(input=layer_conv1,
                                             num_input_channels=num_filters1,
@@ -221,66 +223,63 @@ layer_conv2, weights_conv2 = new_conv_layer(input=layer_conv1,
                                             num_filters=num_filters2,
                                             use_pooling=True)
 
-# Flatten the 2nd conv layer
-layer_flat, num_features = flatten_layer(layer_conv2)
 
-# Add a fclayer
-layer_fc1 = new_fc_layer(input=layer_flat,
-                         num_inputs=num_features,
-                         num_outputs=fc_size,
-                         use_relu=True)
+# conv 3
+layer_conv3, weights_conv3 = new_conv_layer(input=layer_conv2,
+                                            num_input_channels=num_filters1,
+                                            filter_size=filter_size2,
+                                            num_filters=num_filters2,
+                                            use_pooling=False)
+
+# conv 4
+layer_conv4, weights_conv4 = new_conv_layer(input=layer_conv1,
+                                            num_input_channels=num_filters1,
+                                            filter_size=filter_size2,
+                                            num_filters=num_filters2,
+                                            use_pooling=True)
+
+# Flatten the 4nd conv layer
+layer_flat, num_features = flatten_layer(layer_conv4)
+
+h_fc1_drop = tf.nn.dropout(layer_flat, 0.75)
 
 # Output layer
-
-layer_fc2 = new_fc_layer(input=layer_fc1,
-                         num_inputs=fc_size,
+layer_fc1 = new_fc_layer(input=h_fc1_drop,
+                         num_inputs=num_features,
                          num_outputs=num_classes,
-                         use_relu=True)
+                         use_relu=False)
 
-# use softmax to normalize
-y_pred = tf.nn.softmax(layer_fc2)
-y_pred_cls = tf.argmax(y_pred, dimension=1)
+y_pred = tf.nn.softmax(layer_fc1)
+y_pred_cls = tf.argmax(y_pred, axis=1)
+
 
 
 ### Cost function for backprop ####
 # Calculate cross-entropy first
-cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2,
-                                                        labels=y_true)
+#cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc1,
+                                                        # labels=y_true)
 
 # This yields the cost:
-cost = tf.reduce_mean(cross_entropy)
-
+# cost = tf.reduce_mean(cross_entropy)
+cost = tf.squared_difference(layer_fc1, y_true)
 ### Optimization
 optimizer = tf.train.MomentumOptimizer(learning_rate=0.1, momentum=0.9,
                                    use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
-# tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
+# optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
 
 ### Performace measures ###
 correct_prediction = tf.equal(y_pred_cls, y_true_cls)
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-'''
-def get_accuracy(output, label):
-    correct_prediction = 0
+
+def get_win_loss(output, label):
+    win_or_loss = 0
     for i in range(len(output)):
-        best_outputs = []
-        best_original = []
-        max_output = max(output[i])
-        max_original = max(label[i])
-        for s in range(len(output[i])):
-            if output[i][s] == max_output:
-                best_outputs.append(s)
-            if label[i][s] == max_original:
-                best_original.append(s)
-        if len(best_outputs) == 1:
-            if best_outputs[0] in best_original:
-                correct_prediction += 1
-        else:
-            if best_outputs[:] in best_original:
-                correct_prediction += 1
-    accuracy = correct_prediction/len(label)
-    return accuracy
-    return 0
-'''
+        win_or_loss += label[i][output[i]]
+    win_or_loss /= len(output)
+    return win_or_loss
+
+### create saver
+saver = tf.train.Saver()
 ### start the session ###
 
 with tf.Session() as session:
@@ -296,35 +295,30 @@ with tf.Session() as session:
     labels = all_labels[0:int(len(all_labels)*0.8)]
     test_data = all_data[int(len(all_data)*0.8):len(all_data)]
     test_labels = all_labels[int(len(all_labels)*0.8):len(all_labels)]
-    for l in range(20):
-        data_batch, labels_batch = get_batch(data, labels, 50)
+    for l in range(100):
+        data_batch, labels_batch = get_batch(data, labels, 250)
         # create a dummy feed dict. Works similarly when using a bigger dataset
         feed_dict_train = {x: data_batch, y_true: labels_batch}
         # run the network
         session.run(optimizer, feed_dict=feed_dict_train)
+        output = session.run(y_true_cls, feed_dict=feed_dict_train)
+        or_labels = session.run(y_true, feed_dict=feed_dict_train)
         # Calculate the accuracy on the training-set.
-        acc = session.run(accuracy, feed_dict=feed_dict_train)
+        acc = get_win_loss(output, or_labels)
         # Message for printing
         if l % 10 == 0:
-            output = session.run(y_true_cls, feed_dict=feed_dict_train)
-            or_labels = session.run(y_true, feed_dict=feed_dict_train)
             # sm_sp_digits = session.run(sm_ce_sp_digits, feed_dict=feed_dict_train)
             print(output[0])
             print(or_labels[0])
-        msg = "Optimization Iteration: {0:>6}, Accuracy: {1:>6.4}"
+            saver.save(session, "./simple-ffnn.ckpt")
+        msg = "Optimization Iteration: {0:>6}, Win_loss: {1:>6.4}"
         # Print it
         print(msg.format(l, acc))
 
-    data_batch, labels_batch = get_batch(data, labels, 20)
-    feed_dict_test = {x: data_batch, y_true: labels_batch}
-    #output = session.run(y_true_cls, feed_dict=feed_dict_train)
-
-    or_labels = session.run(y_true, feed_dict=feed_dict_train)
-    test_accuracy = session.run(accuracy, feed_dict=feed_dict_test)
-    print("Labels: ")
-    print(or_labels[0])
-    print(or_labels[len(or_labels)-1])
-    print("result: ")
-    print(labels_batch[0])
-    print(labels_batch[len(labels_batch)-1])
-    print("Accuracy: ", test_accuracy)
+    print("Validation started")
+    data_test, label_test = get_batch(test_data, test_labels, 2000)
+    feed_dict_test = {x: data_test, y_true: label_test}
+    saver.save(session, "./simple-ffnn.ckpt")
+    output_val = session.run(layer_fc1, feed_dict=feed_dict_test)
+    labels_val = session.run(y_true, feed_dict=feed_dict_train)
+    print("Accuracy: ", get_win_loss(output_val, labels_val))
