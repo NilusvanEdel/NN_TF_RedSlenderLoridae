@@ -12,14 +12,14 @@ import glob
 ### Set Layer Options ###
 
 # Convolutional Layer 1.
-filter_size1 = 3  # Convolution filters are 3 x 3 pixels.
+filter_size1 = 5  # Convolution filters are 3 x 3 pixels.
 num_filters1 = 40
 # Convolutional Layer 2.
 filter_size2 = 3  # Convolution filters are 5 x 5 pixels.
-num_filters2 = 60  # There are 50 of these filters.
+num_filters2 = 20  # There are 50 of these filters.
 
 # Fully-connected layer.
-fc_size = 100# Number of neurons in fully-connected layer.
+fc_size = 50# Number of neurons in fully-connected layer.
 
 ### Define data dimensions ###
 
@@ -296,8 +296,8 @@ with tf.Session() as session:
     labels = all_labels[0:int(len(all_labels)*0.8)]
     test_data = all_data[int(len(all_data)*0.8):len(all_data)]
     test_labels = all_labels[int(len(all_labels)*0.8):len(all_labels)]
-    for l in range(2):
-        data_batch, labels_batch = get_batch(data, labels, 20)
+    for l in range(20):
+        data_batch, labels_batch = get_batch(data, labels, 50)
         # create a dummy feed dict. Works similarly when using a bigger dataset
         feed_dict_train = {x: data_batch, y_true: labels_batch}
         # run the network
