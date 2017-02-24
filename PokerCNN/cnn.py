@@ -70,7 +70,7 @@ def get_data(state):
         data = []
         print("last_number: ", last_number)
         for i in range(last_number):
-            with open(path + state + "/save" + str(last_number) + ".pickle", 'rb') as handle:
+            with open(path + state + "/save" + str(i) + ".pickle", 'rb') as handle:
                 data.append(pickle.load(handle))
     else:
         raise ValueError('Data could not be found')
