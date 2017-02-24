@@ -241,7 +241,7 @@ def create_tensor(valid_actions, hole_card, round_state, community_card, small_b
     tensor9 = tf.pad(tensor9, [[4, 4], [4, 4]], "CONSTANT")
     # create a 9x17x17 of all of them
     full_tensor = [tensor1, tensor2, tensor3, tensor4, tensor5, tensor6, tensor7, tensor8, tensor9]
-    full_tensor = tf.pack(full_tensor)
+    full_tensor = tf.stack(full_tensor)
     sess = tf.Session()
     with sess.as_default():
         full_tensor = full_tensor.eval()

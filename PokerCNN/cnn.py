@@ -13,14 +13,13 @@ import glob
 
 # Convolutional Layer 1.
 filter_size1 = 3  # Convolution filters are 3 x 3 pixels.
-num_filters1 = 30  # There are 30 of these filters.
-
+num_filters1 = 40
 # Convolutional Layer 2.
-filter_size2 = 5  # Convolution filters are 5 x 5 pixels.
-num_filters2 = 50  # There are 50 of these filters.
+filter_size2 = 3  # Convolution filters are 5 x 5 pixels.
+num_filters2 = 60  # There are 50 of these filters.
 
 # Fully-connected layer.
-fc_size = 128  # Number of neurons in fully-connected layer.
+fc_size = 100# Number of neurons in fully-connected layer.
 
 ### Define data dimensions ###
 
@@ -60,7 +59,7 @@ def new_biases(length):
 
 def get_data(state):
     # path needs to be updated
-    path = "/media/nilus/INTENSO/pokerData/"
+    path = "pokerData/"
     if (os.path.exists(path + state + "/save0.pickle")):
         files = (glob.glob(path + state + "/save*.pickle"))
         last_number = []
@@ -79,7 +78,7 @@ def get_data(state):
 
 def get_results(state):
     # path needs to be updated
-    path = "/media/nilus/INTENSO/pokerData/"
+    path = "pokerData/"
     if (os.path.exists(path + state + "/result0.pickle")):
         files = (glob.glob(path + state + "/result*.pickle"))
         last_number = []
@@ -236,11 +235,12 @@ layer_fc1 = new_fc_layer(input=layer_flat,
 layer_fc2 = new_fc_layer(input=layer_fc1,
                          num_inputs=fc_size,
                          num_outputs=num_classes,
-                         use_relu=False)
+                         use_relu=True)
 
 # use softmax to normalize
 y_pred = tf.nn.softmax(layer_fc2)
 y_pred_cls = tf.argmax(y_pred, dimension=1)
+
 
 ### Cost function for backprop ####
 # Calculate cross-entropy first
@@ -251,7 +251,7 @@ cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2,
 cost = tf.reduce_mean(cross_entropy)
 
 ### Optimization
-optimizer = tf.train.MomentumOptimizer(learning_rate=0.02, momentum=0.05,
+optimizer = tf.train.MomentumOptimizer(learning_rate=0.1, momentum=0.9,
                                    use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
 # tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
 
@@ -296,8 +296,8 @@ with tf.Session() as session:
     labels = all_labels[0:int(len(all_labels)*0.8)]
     test_data = all_data[int(len(all_data)*0.8):len(all_data)]
     test_labels = all_labels[int(len(all_labels)*0.8):len(all_labels)]
-    for l in range(100):
-        data_batch, labels_batch = get_batch(data, labels, 50)
+    for l in range(2):
+        data_batch, labels_batch = get_batch(data, labels, 20)
         # create a dummy feed dict. Works similarly when using a bigger dataset
         feed_dict_train = {x: data_batch, y_true: labels_batch}
         # run the network
@@ -315,14 +315,16 @@ with tf.Session() as session:
         # Print it
         print(msg.format(l, acc))
 
-    feed_dict_test = {x:test_data, y_true:test_labels}
-    or_labels = session.run(y_true, feed_dict=feed_dict_test)
-    output = session.run(y_pred, feed_dict=feed_dict_test)
+    data_batch, labels_batch = get_batch(data, labels, 20)
+    feed_dict_test = {x: data_batch, y_true: labels_batch}
+    #output = session.run(y_true_cls, feed_dict=feed_dict_train)
+
+    or_labels = session.run(y_true, feed_dict=feed_dict_train)
     test_accuracy = session.run(accuracy, feed_dict=feed_dict_test)
     print("Labels: ")
     print(or_labels[0])
-    print(or_labels[len(test_data)])
+    print(or_labels[len(or_labels)-1])
     print("result: ")
-    print(output[0])
-    print(output[len(test_labels)])
+    print(labels_batch[0])
+    print(labels_batch[len(labels_batch)-1])
     print("Accuracy: ", test_accuracy)

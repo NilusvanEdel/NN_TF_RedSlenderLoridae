@@ -9,7 +9,7 @@ import glob
 import sys
 import random
 state_to_save = "preflop"
-path = "/media/nilus/INTENSO/pokerData/"
+path = "save/"
     #get the last saved file
 '''
 if (os.path.exists(path + state_to_save + "/save0.pickle")):
@@ -22,8 +22,8 @@ if (os.path.exists(path + state_to_save + "/save0.pickle")):
 else:
     last_number = 0
     '''
-last_number = 1001
-for i in range(50):
+last_number = 2001
+for i in range(100):
     config = setup_config(max_round=1, initial_stack=100, small_blind_amount=5)
     '''
     config.register_player(name="heuristic", algorithm=HeuristicPlayer())
