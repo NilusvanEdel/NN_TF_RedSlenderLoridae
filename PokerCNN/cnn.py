@@ -40,7 +40,7 @@ depth = 1
 slice_flat = slice_size * slice_size
 
 # Number of output results
-num_classes = 10
+num_classes = 2
 
 ### Load Data ###
 
@@ -64,7 +64,7 @@ def new_biases(length):
 
 def get_data(state):
     # path needs to be updated
-    path = "/media/nilus/INTENSO/pokerData/"
+    path = "/home/nilus/pokerData/"
     if (os.path.exists(path + state + "/save0.pickle")):
         files = (glob.glob(path + state + "/save*.pickle"))
         last_number = []
@@ -84,7 +84,7 @@ def get_data(state):
 
 def get_results(state):
     # path needs to be updated
-    path = "/media/nilus/INTENSO/pokerData/"
+    path = "/home/nilus/pokerData/"
     if (os.path.exists(path + state + "/result0.pickle")):
         files = (glob.glob(path + state + "/result*.pickle"))
         last_number = []
@@ -101,14 +101,27 @@ def get_results(state):
     return result
 
 
-def get_batch(data, labels, size):
+def get_batch(data, results, size):
     batch = []
     batch_labels = []
+    batch_results = []
     for t in range(size):
         no = np.random.randint(0, len(data))
         batch.append(data[no].flatten())
-        batch_labels.append(labels[no])
-    return batch, batch_labels
+        or_results = results[no]
+        changed_results = [0]*2
+        if or_results[0] > or_results[1]:
+            changed_results[0] = 1
+        else:
+            changed_results[1] =1
+        '''
+        changed_results = [0] * len(or_results)
+        index = or_results.index(max(or_results))
+        changed_results[index] = 1
+        '''
+        batch_labels.append(changed_results)
+        batch_results.append(or_results)
+    return batch, batch_labels, batch_results
 
 
 ### Helper to create new conv layer ###
@@ -204,9 +217,9 @@ x = tf.placeholder(tf.float32, shape=[None, slice_flat * depth], name='x')
 x_tensor = tf.reshape(x, [-1, slice_size, slice_size, depth, 1])
 
 # OUTPUT
-y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
+y_true = tf.placeholder(tf.float32, shape=[None, 2], name='y_true')
 # test = tf.unpack(y_true)
-y_true_cls = tf.argmax(y_true, dimension=1)
+# y_true_cls = tf.argmax(y_true, dimension=1)
 
 ### Create Layers###
 # Conv 1
@@ -250,33 +263,46 @@ layer_fc1 = new_fc_layer(input=h_fc1_drop,
                          use_relu=False)
 
 y_pred = tf.nn.softmax(layer_fc1)
-y_pred_cls = tf.argmax(y_pred, axis=1)
+y_pred_cls = tf.argmax(y_pred, dimension=1)
 
 
 
 ### Cost function for backprop ####
 # Calculate cross-entropy first
-#cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc1,
+# cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc1,
                                                         # labels=y_true)
 
 # This yields the cost:
 # cost = tf.reduce_mean(cross_entropy)
 cost = tf.squared_difference(layer_fc1, y_true)
 ### Optimization
-optimizer = tf.train.MomentumOptimizer(learning_rate=0.1, momentum=0.9,
-                                   use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
-# optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
+# optimizer = tf.train.MomentumOptimizer(learning_rate=0.1, momentum=0.9,
+                                   # use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
+optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
 
 ### Performace measures ###
-correct_prediction = tf.equal(y_pred_cls, y_true_cls)
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-def get_win_loss(output, label):
+def get_win_loss(output, ind_output, label):
     win_or_loss = 0
-    for i in range(len(output)):
-        win_or_loss += label[i][output[i]]
-    win_or_loss /= len(output)
+    for i in range(len(ind_output)):
+        if output[i][ind_output[i]] < 0.65:
+            output[i][ind_output[i]] = 0
+        win_or_loss += label[i][ind_output[i]]
+    win_or_loss /= len(ind_output)
     return win_or_loss
+
+def adapt_data(or_data, or_results):
+    label = []
+    data = []
+    for t in range(len(or_data)):
+        data.append(or_data[t].flatten())
+        changed_results = [0] * 2
+        if or_results[t][0] > or_results[t][1]:
+            changed_results[0] = 1
+        else:
+            changed_results[1] = 1
+        label.append(changed_results)
+    return data, label
 
 ### create saver
 saver = tf.train.Saver()
@@ -296,29 +322,28 @@ with tf.Session() as session:
     test_data = all_data[int(len(all_data)*0.8):len(all_data)]
     test_labels = all_labels[int(len(all_labels)*0.8):len(all_labels)]
     for l in range(100):
-        data_batch, labels_batch = get_batch(data, labels, 250)
+        data_batch, labels_batch, or_labels = get_batch(data, labels, 250)
         # create a dummy feed dict. Works similarly when using a bigger dataset
         feed_dict_train = {x: data_batch, y_true: labels_batch}
         # run the network
         session.run(optimizer, feed_dict=feed_dict_train)
-        output = session.run(y_true_cls, feed_dict=feed_dict_train)
-        or_labels = session.run(y_true, feed_dict=feed_dict_train)
+        output = session.run(y_pred, feed_dict=feed_dict_train)
+        output_ind = session.run(y_pred_cls, feed_dict=feed_dict_train)
+        softma = session.run(y_pred, feed_dict=feed_dict_train)
+        print(softma[0])
         # Calculate the accuracy on the training-set.
-        acc = get_win_loss(output, or_labels)
+        acc = get_win_loss(output, output_ind, or_labels)
         # Message for printing
         if l % 10 == 0:
-            # sm_sp_digits = session.run(sm_ce_sp_digits, feed_dict=feed_dict_train)
-            print(output[0])
-            print(or_labels[0])
             saver.save(session, "./simple-ffnn.ckpt")
         msg = "Optimization Iteration: {0:>6}, Win_loss: {1:>6.4}"
         # Print it
         print(msg.format(l, acc))
 
     print("Validation started")
-    data_test, label_test = get_batch(test_data, test_labels, 2000)
+    data_test, label_test, results_test = get_batch(test_data, test_labels, 2000)
     feed_dict_test = {x: data_test, y_true: label_test}
     saver.save(session, "./simple-ffnn.ckpt")
-    output_val = session.run(layer_fc1, feed_dict=feed_dict_test)
-    labels_val = session.run(y_true, feed_dict=feed_dict_train)
-    print("Accuracy: ", get_win_loss(output_val, labels_val))
+    output_val = session.run(y_pred, feed_dict=feed_dict_test)
+    output_val_ind = session.run(y_pred_cls, feed_dict=feed_dict_test)
+    print("Accuracy: ", get_win_loss(output_val, output_val_ind, results_test))

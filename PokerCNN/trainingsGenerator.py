@@ -45,8 +45,10 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                     bu_dealer = dealer.copy()
                     config = setup_config(max_round=1, initial_stack=self.__initial_stack,
                                           small_blind_amount=self.__small_blind)
+                    '''
                     print("______________________________________________________________________")
                     print("simulation_time")
+                    '''
                     # start the simluation of the 10 moves
                     for i in range(10):
                         # recursive call of trainings generator with iterative increase of next action
@@ -76,9 +78,11 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                             normalized_result = amount_win_loss / (poss_win * 2) + 0.5
                         result_of_moves[i] = normalized_result
                     # save the results to file
+                    '''
                     print(result_of_moves)
                     print("simulation over")
                     print("______________________________________________________________________")
+                    '''
                     with open(self.__path+state_to_save+"/result"+str(self.__last_number)+".pickle", 'wb') as handle:
                         pickle.dump(result_of_moves, handle, protocol=pickle.HIGHEST_PROTOCOL)
             # use the heuristic bot for other actions (if next_action =-1 and state to save not reached yet)
@@ -196,7 +200,7 @@ def create_tensor(valid_actions, hole_card, round_state, community_card, small_b
         mainpot_arr[mainpot_cols][i] = 1
     # players active in array
     players_active_arr = np.zeros(shape=(9, 9))
-    for i in range(len(round_state["seats"])):
+    for i in range(len(round_state["seats"])-1):
         if round_state["seats"][i]["state"] == "participating" or round_state["seats"][i]["state"] == "allin":
             players_active_arr[i][:] = 1
     # dealer button in array
