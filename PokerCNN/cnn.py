@@ -12,19 +12,19 @@ import glob
 
 # Convolutional Layer 1.
 filter_size1 = 3  # Convolution filters are 3 x 3 pixels.
-num_filters1 = 20
+num_filters1 = 16
 # Convolutional Layer 2.
 filter_size2 = 3  # Convolution filters are 3 x 3 pixels.
-num_filters2 = 20  # There are 30 of these filters.
+num_filters2 = 16  # There are 30 of these filters.
 # Convolutional Layer 3.
 filter_size3 = 3  # Convolution filters are 3 x 3 Pixels
-num_filters3 = 20
+num_filters3 = 32
 # Convolutional Layer 4.
 filter_size4 = 3
-num_filters4 = 20
+num_filters4 = 32
 
 # Fully-connected layer.
-fc_size = 128# Number of neurons in fully-connected layer.
+fc_size = 512# Number of neurons in fully-connected layer.
 
 ### Define data dimensions ###
 
@@ -109,11 +109,13 @@ def get_batch(data, results, size):
         no = np.random.randint(0, len(data))
         batch.append(data[no].flatten())
         or_results = results[no]
-        changed_results = [0]*2
+        changed_results = results[t][0:2]
+        '''
         if or_results[0] > or_results[1]:
             changed_results[0] = 1
         else:
             changed_results[1] =1
+        '''
         '''
         changed_results = [0] * len(or_results)
         index = or_results.index(max(or_results))
@@ -162,7 +164,7 @@ def new_conv_layer(input,  # The previous layer.
                                  padding='SAME')
 
     #Use a RELU at the end
-    # layer = tf.nn.relu(layer)
+    layer = tf.nn.relu(layer)
 
 
     # Return the new layer and the weights
@@ -192,19 +194,21 @@ def flatten_layer(layer):
 def new_fc_layer(input,  # The previous layer.
                  num_inputs,  # Num. inputs from prev. layer.
                  num_outputs,  # Num. outputs.
-                 use_relu=False):  # Use Rectified Linear Unit (ReLU)?
+                 use_softmax=False):  # Use Rectified Linear Unit (ReLU)?
 
     # Create new weights and biases.
-    weights = new_weights(shape=[num_inputs, num_outputs])
-    biases = new_biases(length=num_outputs)
+    # weights = new_weights(shape=[num_inputs, num_outputs])
+    weights = tf.get_variable("W", shape=[num_inputs, num_outputs],
+                              initializer=tf.contrib.layers.xavier_initializer())
+    # biases = new_biases(length=num_outputs)
 
     # Calculate the layer as the matrix multiplication of
     # the input and weights, and then add the bias-values.
-    layer = tf.matmul(input, weights) + biases
+    layer = tf.matmul(input, weights)
 
     # Use ReLU?
-    if use_relu:
-        layer = tf.nn.relu(layer)
+    if use_softmax:
+        layer = tf.nn.softmax(layer)
 
     return layer
 
@@ -250,7 +254,7 @@ layer_conv4, weights_conv4 = new_conv_layer(input=layer_conv1,
                                             filter_size=filter_size2,
                                             num_filters=num_filters2,
                                             use_pooling=True)
-
+'''
 # Flatten the 4nd conv layer
 layer_flat, num_features = flatten_layer(layer_conv4)
 
@@ -261,34 +265,43 @@ layer_fc1 = new_fc_layer(input=h_fc1_drop,
                          num_inputs=num_features,
                          num_outputs=num_classes,
                          use_relu=False)
+'''
+layer_flat, num_features = flatten_layer(layer_conv4)
+dense = tf.layers.dense(inputs=layer_flat, units=512, activation=tf.nn.relu)
+h_fc1_drop = tf.nn.dropout(dense, 0.5)
+layer_fc1 = new_fc_layer(h_fc1_drop,
+                         num_inputs=512,
+                         num_outputs=num_classes,
+                         use_softmax=False
+                         )
 
-y_pred = tf.nn.softmax(layer_fc1)
-y_pred_cls = tf.argmax(y_pred, dimension=1)
 
 
 
 ### Cost function for backprop ####
 # Calculate cross-entropy first
-# cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc1,
-                                                        # labels=y_true)
+cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc1,
+                                                        labels=y_true)
 
 # This yields the cost:
 # cost = tf.reduce_mean(cross_entropy)
-cost = tf.squared_difference(layer_fc1, y_true)
+cost = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(y_true, layer_fc1))))
+
+
 ### Optimization
-# optimizer = tf.train.MomentumOptimizer(learning_rate=0.1, momentum=0.9,
-                                   # use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
+# optimizer = tf.train.MomentumOptimizer(learning_rate=0.01, momentum=0.9,
+                                   #use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
 optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
 
 ### Performace measures ###
 
-def get_win_loss(output, ind_output, label):
+def get_win_loss(output, label):
     win_or_loss = 0
-    for i in range(len(ind_output)):
-        if output[i][ind_output[i]] < 0.65:
-            output[i][ind_output[i]] = 0
-        win_or_loss += label[i][ind_output[i]]
-    win_or_loss /= len(ind_output)
+    for i in range(len(output)):
+        ind_output = np.argmax(output[i])
+        win_or_loss += label[i][ind_output]
+    win_or_loss /= len(output)
+    print(label)
     return win_or_loss
 
 def adapt_data(or_data, or_results):
@@ -297,17 +310,19 @@ def adapt_data(or_data, or_results):
     for t in range(len(or_data)):
         data.append(or_data[t].flatten())
         changed_results = [0] * 2
+        changed_results = or_results[t][0:2]
+        '''
         if or_results[t][0] > or_results[t][1]:
             changed_results[0] = 1
         else:
             changed_results[1] = 1
         label.append(changed_results)
+        '''
     return data, label
 
 ### create saver
 saver = tf.train.Saver()
 ### start the session ###
-
 with tf.Session() as session:
     session.run(tf.global_variables_initializer())
 
@@ -317,33 +332,28 @@ with tf.Session() as session:
     # Format: [data1, data2, ... ] , [label1, label2, ...]. data: 3d array, label: 1d array length 10
     all_data = get_data("preflop")
     all_labels = get_results("preflop")
-    data = all_data[0:int(len(all_data)*0.8)]
-    labels = all_labels[0:int(len(all_labels)*0.8)]
-    test_data = all_data[int(len(all_data)*0.8):len(all_data)]
-    test_labels = all_labels[int(len(all_labels)*0.8):len(all_labels)]
-    for l in range(100):
-        data_batch, labels_batch, or_labels = get_batch(data, labels, 250)
+    data = all_data[0:int(len(all_data)*0.85)]
+    labels = all_labels[0:int(len(all_labels)*0.85)]
+    test_data = all_data[int(len(all_data)*0.85):len(all_data)]
+    test_labels = all_labels[int(len(all_labels)*0.85):len(all_labels)]
+    for counter in range(1000):
+        data_batch, labels_batch, results_batch = get_batch(data, labels, 250)
         # create a dummy feed dict. Works similarly when using a bigger dataset
         feed_dict_train = {x: data_batch, y_true: labels_batch}
         # run the network
         session.run(optimizer, feed_dict=feed_dict_train)
-        output = session.run(y_pred, feed_dict=feed_dict_train)
-        output_ind = session.run(y_pred_cls, feed_dict=feed_dict_train)
-        softma = session.run(y_pred, feed_dict=feed_dict_train)
-        print(softma[0])
+        output = session.run(layer_fc1, feed_dict=feed_dict_train)
+        print(output[0])
         # Calculate the accuracy on the training-set.
-        acc = get_win_loss(output, output_ind, or_labels)
-        # Message for printing
-        if l % 10 == 0:
-            saver.save(session, "./simple-ffnn.ckpt")
+        acc = get_win_loss(output, results_batch)
+        saver.save(session, "./simple-ffnn.ckpt")
         msg = "Optimization Iteration: {0:>6}, Win_loss: {1:>6.4}"
         # Print it
-        print(msg.format(l, acc))
+        print(msg.format(counter, acc))
 
     print("Validation started")
-    data_test, label_test, results_test = get_batch(test_data, test_labels, 2000)
+    data_test, label_test = adapt_data(test_data, test_labels)
     feed_dict_test = {x: data_test, y_true: label_test}
     saver.save(session, "./simple-ffnn.ckpt")
-    output_val = session.run(y_pred, feed_dict=feed_dict_test)
-    output_val_ind = session.run(y_pred_cls, feed_dict=feed_dict_test)
-    print("Accuracy: ", get_win_loss(output_val, output_val_ind, results_test))
+    output_val = session.run(layer_fc1, feed_dict=feed_dict_test)
+    print("Accuracy: ", get_win_loss(output_val, test_labels))
