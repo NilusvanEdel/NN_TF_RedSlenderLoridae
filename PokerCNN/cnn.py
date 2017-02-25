@@ -109,7 +109,7 @@ def get_batch(data, results, size):
         no = np.random.randint(0, len(data))
         batch.append(data[no].flatten())
         or_results = results[no]
-        changed_results = results[t][0:2]
+        changed_results = results[no][0:2]
         '''
         if or_results[0] > or_results[1]:
             changed_results[0] = 1
@@ -285,13 +285,13 @@ cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc1,
 
 # This yields the cost:
 # cost = tf.reduce_mean(cross_entropy)
-cost = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(y_true, layer_fc1))))
+#cost = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(y_true, layer_fc1))))
 
 
 ### Optimization
 # optimizer = tf.train.MomentumOptimizer(learning_rate=0.01, momentum=0.9,
                                    #use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
-optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
+optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cross_entropy)
 
 ### Performace measures ###
 
@@ -301,7 +301,6 @@ def get_win_loss(output, label):
         ind_output = np.argmax(output[i])
         win_or_loss += label[i][ind_output]
     win_or_loss /= len(output)
-    print(label)
     return win_or_loss
 
 def adapt_data(or_data, or_results):
