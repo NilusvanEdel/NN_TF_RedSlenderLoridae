@@ -8,6 +8,9 @@ import math
 import pickle
 import os.path
 import glob
+
+### Set the state to Train
+state = "river"
 ### Set Layer Options ###
 
 # Convolutional Layer 1.
@@ -107,20 +110,19 @@ def get_batch(data, results, size):
     batch_results = []
     for t in range(size):
         no = np.random.randint(0, len(data))
-        batch.append(data[no].flatten())
-        or_results = results[no]
-        changed_results = results[no][0:2]
-        '''
-        if or_results[0] > or_results[1]:
+        or_results = results[no][0:2]
+        changed_results = [0] * 2
+        # changed_results = results[no][0:2]
+        if or_results[0] >= or_results[1]:
             changed_results[0] = 1
         else:
-            changed_results[1] =1
-        '''
+            changed_results[1] = 1
         '''
         changed_results = [0] * len(or_results)
         index = or_results.index(max(or_results))
         changed_results[index] = 1
         '''
+        batch.append(data[no].flatten())
         batch_labels.append(changed_results)
         batch_results.append(or_results)
     return batch, batch_labels, batch_results
@@ -194,24 +196,24 @@ def flatten_layer(layer):
 def new_fc_layer(input,  # The previous layer.
                  num_inputs,  # Num. inputs from prev. layer.
                  num_outputs,  # Num. outputs.
-                 use_softmax=False):  # Use Rectified Linear Unit (ReLU)?
+                 use_relu=True):  # Use Rectified Linear Unit (ReLU)?
 
     # Create new weights and biases.
-    # weights = new_weights(shape=[num_inputs, num_outputs])
+    '''
     weights = tf.get_variable("W", shape=[num_inputs, num_outputs],
-                              initializer=tf.contrib.layers.xavier_initializer())
-    # biases = new_biases(length=num_outputs)
+                                  initializer=tf.contrib.layers.xavier_initializer())
+                                  '''
 
     # Calculate the layer as the matrix multiplication of
     # the input and weights, and then add the bias-values.
-    layer = tf.matmul(input, weights)
 
     # Use ReLU?
-    if use_softmax:
-        layer = tf.nn.softmax(layer)
+    if use_relu:
+        layer = tf.layers.dense(input, num_outputs, activation=tf.nn.relu)
+    else:
+        layer = tf.layers.dense(input, num_outputs)
 
     return layer
-
 
 ### Placeholders ###
 
@@ -239,8 +241,6 @@ layer_conv2, weights_conv2 = new_conv_layer(input=layer_conv1,
                                             filter_size=filter_size2,
                                             num_filters=num_filters2,
                                             use_pooling=True)
-
-
 # conv 3
 layer_conv3, weights_conv3 = new_conv_layer(input=layer_conv2,
                                             num_input_channels=num_filters1,
@@ -254,44 +254,41 @@ layer_conv4, weights_conv4 = new_conv_layer(input=layer_conv1,
                                             filter_size=filter_size2,
                                             num_filters=num_filters2,
                                             use_pooling=True)
-'''
 # Flatten the 4nd conv layer
 layer_flat, num_features = flatten_layer(layer_conv4)
 
-h_fc1_drop = tf.nn.dropout(layer_flat, 0.75)
+dense = new_fc_layer(input=layer_flat,
+                     num_inputs=num_features,
+                     num_outputs=fc_size,
+                     use_relu=True)
+h_fc2_drop = tf.nn.dropout(dense, 0.5)
+dense2 = new_fc_layer(input=h_fc2_drop,
+                     num_inputs=num_features,
+                     num_outputs=fc_size,
+                     use_relu=True)
 
-# Output layer
-layer_fc1 = new_fc_layer(input=h_fc1_drop,
-                         num_inputs=num_features,
-                         num_outputs=num_classes,
-                         use_relu=False)
-'''
-layer_flat, num_features = flatten_layer(layer_conv4)
-dense = tf.layers.dense(inputs=layer_flat, units=512, activation=tf.nn.relu)
-h_fc1_drop = tf.nn.dropout(dense, 0.5)
-layer_fc1 = new_fc_layer(h_fc1_drop,
+layer_fc1 = new_fc_layer(dense2,
                          num_inputs=512,
                          num_outputs=num_classes,
-                         use_softmax=False
-                         )
+                         use_relu=False)
 
-
+output_layer = tf.nn.softmax(layer_fc1)
 
 
 ### Cost function for backprop ####
 # Calculate cross-entropy first
-cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc1,
-                                                        labels=y_true)
+#cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=output_layer,
+                                                        #labels=y_true)
 
 # This yields the cost:
-# cost = tf.reduce_mean(cross_entropy)
-#cost = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(y_true, layer_fc1))))
+#cost = tf.reduce_mean(cross_entropy)
+cost = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(y_true, output_layer))))
 
 
 ### Optimization
-# optimizer = tf.train.MomentumOptimizer(learning_rate=0.01, momentum=0.9,
-                                   #use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
-optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cross_entropy)
+optimizer = tf.train.MomentumOptimizer(learning_rate=0.01, momentum=0.9,
+                                   use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
+#optimizer = tf.train.AdamOptimizer(learning_rate=1e-6).minimize(cost)
 
 ### Performace measures ###
 
@@ -299,7 +296,13 @@ def get_win_loss(output, label):
     win_or_loss = 0
     for i in range(len(output)):
         ind_output = np.argmax(output[i])
-        win_or_loss += label[i][ind_output]
+        if ind_output == 0: #todo remove later
+            win_or_loss += 0.5 #remove later
+        else:
+            if label[i][ind_output] > 0.5:
+                win_or_loss += 1
+            else:
+                win_or_loss += 0
     win_or_loss /= len(output)
     return win_or_loss
 
@@ -309,14 +312,12 @@ def adapt_data(or_data, or_results):
     for t in range(len(or_data)):
         data.append(or_data[t].flatten())
         changed_results = [0] * 2
-        changed_results = or_results[t][0:2]
-        '''
+        #changed_results = or_results[t][0:2]
         if or_results[t][0] > or_results[t][1]:
             changed_results[0] = 1
         else:
             changed_results[1] = 1
         label.append(changed_results)
-        '''
     return data, label
 
 ### create saver
@@ -329,8 +330,8 @@ with tf.Session() as session:
     ### FIRST TEST WITH TEST DATA
     # Needed here is: A loop, in which batches of train data + labels are retrieved (best by a helper script)
     # Format: [data1, data2, ... ] , [label1, label2, ...]. data: 3d array, label: 1d array length 10
-    all_data = get_data("preflop")
-    all_labels = get_results("preflop")
+    all_data = get_data(state)
+    all_labels = get_results(state)
     data = all_data[0:int(len(all_data)*0.85)]
     labels = all_labels[0:int(len(all_labels)*0.85)]
     test_data = all_data[int(len(all_data)*0.85):len(all_data)]
@@ -341,13 +342,14 @@ with tf.Session() as session:
         feed_dict_train = {x: data_batch, y_true: labels_batch}
         # run the network
         session.run(optimizer, feed_dict=feed_dict_train)
-        output = session.run(layer_fc1, feed_dict=feed_dict_train)
+        output = session.run(output_layer, feed_dict=feed_dict_train)
         print(output[0])
         # Calculate the accuracy on the training-set.
         acc = get_win_loss(output, results_batch)
         saver.save(session, "./simple-ffnn.ckpt")
         msg = "Optimization Iteration: {0:>6}, Win_loss: {1:>6.4}"
         # Print it
+        print("best win_loss: ", get_win_loss(labels_batch, results_batch))
         print(msg.format(counter, acc))
 
     print("Validation started")

@@ -9,7 +9,8 @@ class FishPlayer(BasePokerPlayer):  # Do not forget to make parent class as "Bas
     #  we define the logic to make an action through this method. (so this method would be the core of your AI)
     def declare_action(self, valid_actions, hole_card, round_state, dealer):
         # valid_actions format => [fold_action_info, raise_action_info, call_action_info]
-        act = randint(0, 1)
+        # act = randint(0, 1)
+        act = False
         if not act or valid_actions[2]["amount"]["min"] == -1:
             call_action_info = valid_actions[1]
             action, amount = call_action_info["action"], call_action_info["amount"]

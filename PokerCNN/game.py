@@ -3,12 +3,13 @@ from fishPlayer import FishPlayer
 from heuristicPlayer import HeuristicPlayer
 from allinPlayer import AllinPlayer
 from trainingsGenerator import TrainingsGenerator
+from fishPlayer import FishPlayer
 from random import randint
 import os.path
 import glob
 import sys
 import random
-state_to_save = "preflop"
+state_to_save = "river"
 path = "/home/nilus/pokerData/"
     #get the last saved file
 def create_bachtes(num, num_players):
@@ -22,14 +23,13 @@ def create_bachtes(num, num_players):
         last_number = 0
     for i in range(num):
         config = setup_config(max_round=1, initial_stack=100, small_blind_amount=5)
-        config.register_player(name=("p", i), algorithm=AllinPlayer())
         own_seat = randint(1, num_players)
         for x in range(1, own_seat):
-            config.register_player(name=("p", x), algorithm=AllinPlayer())
+            config.register_player(name=("p", x), algorithm=FishPlayer())
         config.register_player("trainingsGenerator", algorithm=TrainingsGenerator(-1, state_to_save,
                                path, last_number))
-        for x in range(own_seat+1, 10):
-            config.register_player(name=("p", x), algorithm=AllinPlayer())
+        for x in range(own_seat+1, num_players+1):
+            config.register_player(name=("p", x), algorithm=FishPlayer())
         game_result = start_poker(config, verbose = 0)
         # print("I: ", i)
         last_number += 1

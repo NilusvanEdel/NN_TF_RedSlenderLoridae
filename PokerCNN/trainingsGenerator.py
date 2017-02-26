@@ -3,6 +3,7 @@ from random import randint
 from pypokerengine.engine.dealer import Dealer
 from pypokerengine.api.game import setup_config, start_poker_with_dealer
 from heuristicPlayer import HeuristicPlayer
+from fishPlayer import FishPlayer
 import pickle
 import numpy as np
 import tensorflow as tf
@@ -86,8 +87,11 @@ class TrainingsGenerator(HeuristicPlayer):  # Do not forget to make parent class
                     with open(self.__path+state_to_save+"/result"+str(self.__last_number)+".pickle", 'wb') as handle:
                         pickle.dump(result_of_moves, handle, protocol=pickle.HIGHEST_PROTOCOL)
             # use the heuristic bot for other actions (if next_action =-1 and state to save not reached yet)
+            '''
             return HeuristicPlayer.bot_action(self, valid_actions, hole_card, round_state,
                                         dealer, self.__community_card, self.__stack, self.__last_action)
+                                        '''
+            return FishPlayer.declare_action(self, valid_actions, hole_card, round_state, dealer)
         # if next=action != -1 and state to save (preflop/flop/...) is reached
         else:
             if 0 <= self.__next_action < 9:
