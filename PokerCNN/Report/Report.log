@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (MiKTeX 2.9.6100 64-bit) (preloaded format=pdflatex 2016.11.20)  27 FEB 2017 13:13
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (MiKTeX 2.9.6100 64-bit) (preloaded format=pdflatex 2016.11.20)  27 FEB 2017 15:19
 entering extended mode
 **./Report.tex
 (Report.tex
@@ -45,24 +45,27 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 
 [1
 
-{C:/ProgramData/MiKTeX/2.9/pdftex/config/pdftex.map}] [1] [1] [2
+{C:/ProgramData/MiKTeX/2.9/pdftex/config/pdftex.map}] [1]
+Missing character: There is no Ã in font cmr10!
+Missing character: There is no ¼ in font cmr10!
+ [1] [2
 
 ] (Report.aux) ) 
 Here is how much of TeX's memory you used:
  254 strings out of 493333
  2645 string characters out of 3139190
- 54242 words of memory out of 3000000
+ 56242 words of memory out of 3000000
  3858 multiletter control sequences out of 15000+200000
  8847 words of font info for 31 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 23i,6n,17p,200b,179s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 23i,6n,17p,1229b,179s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmb
 x10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
 <C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Progr
 am Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Program Files/
 MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Program Files/MiKTeX 2.
 9/fonts/type1/public/amsfonts/cm/cmti10.pfb>
-Output written on Report.pdf (4 pages, 81393 bytes).
+Output written on Report.pdf (4 pages, 86930 bytes).
 PDF statistics:
  39 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
