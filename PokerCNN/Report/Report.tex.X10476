@@ -1,0 +1,18 @@
+\documentclass[]{article}
+
+
+% Title Page
+\title{Implementing neural networks with tensorflow report}
+\author{Linus Edelkott, Tobias Petri}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+	Fancy Abstract
+\end{abstract}
+
+
+\section{Introduction}
+\end{document}          
