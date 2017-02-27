@@ -35,7 +35,7 @@ fc_size = 512# Number of neurons in fully-connected layer.
 slice_size = 17
 
 # Size for the depth
-depth = 1
+depth = 9
 
 # (Results in 17x17x9 later)
 
@@ -79,7 +79,7 @@ def get_data(state):
         for i in range(last_number):
             with open(path + state + "/save" + str(i) + ".pickle", 'rb') as handle:
                 or_data = pickle.load(handle)
-                data.append(or_data[0])
+                data.append(or_data)
     else:
         raise ValueError('Data could not be found')
     return data
@@ -282,7 +282,7 @@ output_layer = tf.nn.softmax(layer_fc1)
 
 # This yields the cost:
 #cost = tf.reduce_mean(cross_entropy)
-cost = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(y_true, output_layer))))
+cost = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(y_true, layer_fc1))))
 
 
 ### Optimization
