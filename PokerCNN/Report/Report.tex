@@ -1,5 +1,6 @@
 \documentclass[]{report}
 \renewcommand{\thesection}{\arabic{section}}
+\usepackage{graphicx}
 
 
 % Title Page
@@ -27,6 +28,10 @@ Unlike other games such as chess or checkers, poker provides an especially chall
 The convolutional neural network that was used within this project has an architecture similar to the original CNN from the paper\cite{1}. The input data is formatted as a 17x17x9 3-dimensional tensor, including all blablablubb [Wie zum Geier sieht denn nun unser Format eig. aus?]
 
 
+\begin{figure}[h]
+\caption{Network structure}
+\includegraphics[scale = 0.5]{cnn_structure.jpg}
+\end{figure}
 
 
 \begin{thebibliography}{}
