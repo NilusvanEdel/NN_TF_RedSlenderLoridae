@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (MiKTeX 2.9.6100 64-bit) (preloaded format=pdflatex 2016.11.20)  28 FEB 2017 11:46
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (MiKTeX 2.9.6100 64-bit) (preloaded format=pdflatex 2016.11.20)  28 FEB 2017 19:39
 entering extended mode
 **./Report.tex
 (Report.tex
@@ -139,11 +139,31 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <7> on input line 38.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 38.
- [1] [2]
+ [1]
 
-LaTeX Warning: Reference `tab:tensor' on page 3 undefined on input line 152.
+LaTeX Warning: Reference `see:CNN_arc' on page 2 undefined on input line 77.
 
-[3] <cnn_structure.jpg, id=25, 697.10437pt x 222.8325pt>
+[2] <Features.JPG, id=22, 846.16125pt x 169.38281pt>
+File: Features.JPG Graphic file (type jpg)
+ <use Features.JPG>
+Package pdftex.def Info: Features.JPG used on input line 155.
+(pdftex.def)             Requested size: 423.07959pt x 84.6912pt.
+
+Overfull \hbox (78.07959pt too wide) in paragraph at lines 155--156
+[][] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 162--164
+\OT1/cmr/m/n/10 bot.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 162--164
+
+ []
+
+[3] <cnn_structure.jpg, id=26, 697.10437pt x 222.8325pt>
 File: cnn_structure.jpg Graphic file (type jpg)
 
 <use cnn_structure.jpg>
@@ -154,7 +174,7 @@ Overfull \hbox (3.55133pt too wide) in paragraph at lines 168--169
 [][] 
  []
 
-[4 <./cnn_structure.jpg>] [5
+[4 <./Features.JPG> <./cnn_structure.jpg>] [5] [6
 
 ] (Report.aux)
 
@@ -162,10 +182,10 @@ LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 1522 strings out of 493333
- 21380 string characters out of 3139190
- 84731 words of memory out of 3000000
- 5061 multiletter control sequences out of 15000+200000
+ 1530 strings out of 493333
+ 21485 string characters out of 3139190
+ 84739 words of memory out of 3000000
+ 5067 multiletter control sequences out of 15000+200000
  8847 words of font info for 31 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
  40i,8n,25p,1460b,217s stack positions out of 5000i,500n,10000p,200000b,50000s
@@ -178,9 +198,9 @@ public/amsfonts/cm/cmr6.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/ams
 fonts/cm/cmr7.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/c
 mr8.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmti10.pfb>
 
-Output written on Report.pdf (7 pages, 180191 bytes).
+Output written on Report.pdf (8 pages, 235568 bytes).
 PDF statistics:
- 63 PDF objects out of 1000 (max. 8388607)
+ 67 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 6 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 11 words of extra memory for PDF output out of 10000 (max. 10000000)
 

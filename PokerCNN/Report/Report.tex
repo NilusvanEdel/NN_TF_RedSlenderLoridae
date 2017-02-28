@@ -104,7 +104,7 @@ Due to this different options the expected outcome can not simply
 be estimated by Monte Carlo sampling. Thus for each training hand
 several epochs of this hand were simulated using simple heuristic
 bots, which adjusted their winning chance according to the previously
-simulated allin probabilities. Once again the expected outcome of
+simulated Allin probabilities. Once again the expected outcome of
 this simulation was used as label for the respective hand. Overall
 500000 hands were used for training. 
 
@@ -130,10 +130,10 @@ visible for everyone and constitute the current hand of each player
 together with their respective hole cards. The next betting round
 starts and the game continues with the drawing of a single community
 card and the following betting round which will be repeated once more
-(the turn and river). The 5 best cards out of this 7 constitutute
+(the turn and river). The 5 best cards out of this 7 constitute
 the hand of each player and determines the winner.
 
-Instead of using a 4x13 matrix for each indivudal card we used one
+Instead of using a 4x13 matrix for each individual card we used one
 matrix for each round. Thus the first 4x13 matrix has two elements
 different than zero, the second one has 3 and the others have one,
 respectively. Hence the network shouldn't differentiate between the
@@ -147,7 +147,7 @@ about the state of the other players, if the respective row is 1 they
 are still active and didn't fold yet. Additional to the numerical
 coded amount of chips in the pot a second similarly coded matrix containing
 the amount of chips placed in the current betting round is needed.
-We assume that a really competetive Player would need more information
+We assume that a really competitive Player would need more information
 but assumed that this would increase the learning phase. The final
 representation is a 9x17x17 tensor, summarized in Table \ref{tab:tensor}.
 
@@ -157,34 +157,18 @@ representation is a 9x17x17 tensor, summarized in Table \ref{tab:tensor}.
 \caption{Features used as inputs for Texas Hold'em no Limit Poker \label{tab:tensor}}
 
 \end{table}
-
+\subsection{The network structure}
 
 The convolutional neural network that was used within this project has an architecture similar to the original CNN from the paper\cite{1}. While Yakovenko, Nikolai et. al. compared a fully connected network, a CNN with 3x3 filters and a 5x5 filter CNN, We decided to only compare 3x3 and 5x5 CNNs. Using Tensorflow gave us the advantage of using 3d convolution, unlike the 2d convolution used in the original network\footnote{The paper does not specify the exact type of convolution used. However, based on the github projects of the author, we assume 2d convolution.}. With the input as explained in section 2.2, the first two layers are 3d convolutional, with a max pool after the second. This is followed by yet another 2 convolutional layers with max pool, only with decreased size. 
-Afterwards, a dense 50\% dropout layer feeds directly into the output layer. Figure 1 shows the network structure from the paper. Aside from the different input, the output of our implementation has also been modified: Where the original had 5 output neurons, our version has only 2, representing the options 'fold' and 'call'. These are the only relevant moves, since our training opponent is an allin bot.
+Afterwards, a dense 50\% dropout layer feeds directly into the output layer. Figure 1 shows the network structure from the paper. Aside from the different input, the output of our implementation has also been modified: Where the original had 5 output neurons, our version has only 2, representing the options 'fold' and 'call'. These are the only relevant moves, since our training opponent is an allin bot.\linebreak
 
 
 \begin{figure}[h]
 	\caption{Network structure}
 	\includegraphics[scale = 0.5]{cnn_structure.jpg}
-\end{figure}
+\end{figure} 
 
-Unfortunately we were not able to produce any significant results
-and our network was unable to learn how to beat even a simple Allin
-bot. In order to find the source of error we tried several different
-settings. We tried changing the number of kernels used in each layer
-from 5 to 16 to 32. Then we tried whether it makes a difference if
-we use the whole tensor as input, or only the hole cards. As already
-mentioned in section \ref{see:CNN_arc} we also decreased the output
-size to only 2 moves. However this didn't change the unsatisfactory
-results we were getting. We assume that this is caused by varying
-reasons. 
-
-First of all, even 65000 hands are probably not enough to train the
-network if we compare it to the 2598960 possible hole cards in Poker.
-However even when run on the same hands repeatedly (several epochs)
-the network did not suceed in classifying a winning move. 
-
-Furthermore we made a few critical changes to the original paper.
+We made a few critical changes to the original paper:
 The original paper created the playing hand first and created several
 simulations of this particular hand as label. All of this happened
 in the training process. Our approach however generated one hand and
@@ -192,11 +176,11 @@ simulated the results of each possible move beforehand and only once.
 So while the original network used an evaluation of the expected outcome
 our network should learn to predict the outcome of this move based
 on one single simulation (assuming that the hand was only generated
-once), increasing the complexity of the task immensily. We realised
-this relatively late and given the way our pokerengine was implemented
+once), increasing the complexity of the task immensely We realised
+this relatively late and given the way our poker engine was implemented
 changing the simulation results from one to several simulations would
 have resulted in a calculation time unfit for our computers. We assume
-that this adaption of the simulations would already be sufficient
+that this adaptation of the simulations would already be sufficient
 to finally win against a simple Allin player.
 
 The second change was that we decreased the input tensor, Yakovenko,
@@ -211,7 +195,9 @@ would increase the calculation time even more.
 
 Unfortunately we were not able to produce any significant results and our network was unable to learn how to beat even a simple Allin bot. In order to find the source of error we tried several different settings. However it didn't make a difference if the used kernel were 5, 16 or 32, neither did it make a difference whether we used the whole tensor as input, or only the hole cards. We assume that this is caused by varying reasons. 
 
-First of all, even 65000 hands are probably not enough to train the if we compare it to the 2598960 possible hole cards in Poker. However even when run on the same hands repeatedly (several epochs) the network did not suceed in classifying a winning move.
+First of all, even 65000 hands are probably not enough to train the if we compare it to the 2598960 possible hole cards in Poker. However, even when run on the same hands repeatedly (several epochs) the network did not succeed in classifying a winning move. Assuming that the amount of data was not the problem, another reason might have been the data format. This assumption could be reasonable for the first implementation with 10 labels, but is rather unlikely for the final version with only 2 outputs. Since the input that was used in the paper differs from ours, this seems to be the most likely cause right now. As far as the actual network structure goes, different versions with varying layer size, amount of layers, cost functions and optimizers all yielded a very similar result, only decreasing in accuracy. It should be noted that all networks showed no significant increase in accuracy, but rather a random behaviour within a normal distribution. This leads to the conclusion that the network completely played by chance without any real strategy and it didn't learn anything significant from the training data, which is unexpected, given the results of the paper. 
+
+Concluding, a similar network with improved input data format seems like the most promising solution.
 
 \begin{thebibliography}{}
 	\bibitem{1} Yakovenko, Nikolai, et al., \emph{Poker-CNN: a pattern learning strategy for making draws and bets in poker games.}, arXiv preprint arXiv:1509.06731 (2015).
