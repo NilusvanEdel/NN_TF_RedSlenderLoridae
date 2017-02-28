@@ -1,14 +1,15 @@
 from pypokerengine.players import BasePokerPlayer
 from random import randint
 
-# a really dumb PokerPlayer who got a 50% chance to either call(check) or raise(minimal)
-class FishPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
+# a really dumb PokerPlayer who will always call
+class FishPlayer(BasePokerPlayer):
     def __init__(self):
         self.__community_card = []
 
-    #  we define the logic to make an action through this method. (so this method would be the core of your AI)
+    # the call action is defined here
     def declare_action(self, valid_actions, hole_card, round_state, dealer):
         # valid_actions format => [fold_action_info, raise_action_info, call_action_info]
+        # if activated it will have a 50% to fold or call
         # act = randint(0, 1)
         act = False
         if not act or valid_actions[2]["amount"]["min"] == -1:

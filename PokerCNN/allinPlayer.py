@@ -1,7 +1,7 @@
 from pypokerengine.players import BasePokerPlayer
 from random import randint
 
-# a really dumb PokerPlayer who goes always allin
+# a really dumb PokerPlayer will always go allin
 class AllinPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
     def __init__(self):
         self.__community_card = []
@@ -9,7 +9,7 @@ class AllinPlayer(BasePokerPlayer):  # Do not forget to make parent class as "Ba
         self.__positionInGameInfos = 0
         self.__last_action = ["call", 0]
 
-    #  we define the logic to make an action through this method. (so this method would be the core of your AI)
+    #  the allin action is defined here
     def declare_action(self, valid_actions, hole_card, round_state, dealer):
         # if no simple raise to allin possible (no simple minimal raise or someones overbet you already)
         if valid_actions[2]["amount"]["min"] == -1:
@@ -24,14 +24,14 @@ class AllinPlayer(BasePokerPlayer):  # Do not forget to make parent class as "Ba
             raise_action_info = valid_actions[2]
             action, amount = raise_action_info["action"], raise_action_info["amount"]["max"]
         return action, amount   # action returned here is sent to the poker engine
-
+    # set the paramaters provided by the engine at game start
     def receive_game_start_message(self, game_info):
         for i in range(len(game_info["seats"])):
             if game_info["seats"][i]["uuid"] == self.uuid:
                 self.__stack = game_info["seats"][i]["stack"]
                 self.__positionInGameInfos = i
         pass
-
+    # update the parameters
     def receive_round_start_message(self, round_count, hole_card, seats):
         self.__community_card = []
         self.__last_action = ["call", 0]
@@ -39,7 +39,7 @@ class AllinPlayer(BasePokerPlayer):  # Do not forget to make parent class as "Ba
 
     def receive_street_start_message(self, street, round_state):
         pass
-
+    # get your previous actions required for don't "overbetting" when going all-in
     def receive_game_update_message(self, action, round_state):
         self.__community_card = round_state["community_card"]
         self.__stack = round_state["seats"][self.__positionInGameInfos]["stack"]
