@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (MiKTeX 2.9.6100 64-bit) (preloaded format=pdflatex 2016.11.20)  28 FEB 2017 20:38
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (MiKTeX 2.9.6100 64-bit) (preloaded format=pdflatex 2016.11.20)  28 FEB 2017 22:04
 entering extended mode
 **./Report.tex
 (Report.tex
@@ -164,7 +164,7 @@ Overfull \hbox (3.55133pt too wide) in paragraph at lines 170--171
 [][] 
  []
 
-[4 <./Features.JPG> <./cnn_structure.jpg>] [5] [6] [7
+[4 <./Features.JPG> <./cnn_structure.jpg>] [5] [6
 
 ] (Report.aux)
 
@@ -188,9 +188,9 @@ public/amsfonts/cm/cmr6.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/ams
 fonts/cm/cmr7.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/c
 mr8.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmti10.pfb>
 
-Output written on Report.pdf (9 pages, 236220 bytes).
+Output written on Report.pdf (8 pages, 235810 bytes).
 PDF statistics:
- 70 PDF objects out of 1000 (max. 8388607)
+ 67 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  11 words of extra memory for PDF output out of 10000 (max. 10000000)
 
