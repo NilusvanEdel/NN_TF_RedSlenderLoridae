@@ -160,7 +160,9 @@ representation is a 9x17x17 tensor, summarized in Table \ref{tab:tensor}.
 \subsection{The network structure}
 
 The convolutional neural network that was used within this project has an architecture similar to the original CNN from the paper\cite{1}. While Yakovenko, Nikolai et. al. compared a fully connected network, a CNN with 3x3 filters and a 5x5 filter CNN, We decided to only compare 3x3 and 5x5 CNNs. Using Tensorflow gave us the advantage of using 3d convolution, unlike the 2d convolution used in the original network\footnote{The paper does not specify the exact type of convolution used. However, based on the github projects of the author, we assume 2d convolution.}. With the input as explained in section 2.2, the first two layers are 3d convolutional, with a max pool after the second. This is followed by yet another 2 convolutional layers with max pool, only with decreased size. 
-Afterwards, a dense 50\% dropout layer feeds directly into the output layer. Figure 1 shows the network structure from the paper. Aside from the different input, the output of our implementation has also been modified: Where the original had 5 output neurons, our version has only 2, representing the options 'fold' and 'call'. These are the only relevant moves, since our training opponent is an allin bot.\linebreak
+Afterwards, a dense 50\% dropout layer feeds directly into the output layer. Figure 1 shows the network structure from the paper. Aside from the different input, the output of our implementation has also been modified: Where the original had 5 output neurons, our version has only 2, representing the options 'fold' and 'call'. These are the only relevant moves, since our training opponent is an allin bot.
+
+The cost function for this network is the mean squared error, with the Nesterov momentum as optimization function. Both were chosen according to the original paper and compared to an Adam optimizer as well as cross entropy, showing that the MSE together with Nesterov perform better.
 
 
 \begin{figure}[h]
