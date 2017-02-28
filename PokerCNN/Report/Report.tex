@@ -147,9 +147,12 @@ about the state of the other players, if the respective row is 1 they
 are still active and didn't fold yet. Additional to the numerical
 coded amount of chips in the pot a second similarly coded matrix containing
 the amount of chips placed in the current betting round is needed.
-The final representation is a 9x17x17 tensor, summarized in Table
-\ref{tab:tensor}. 
+We assume that a really competetive Player would need more information
+but assumed that this would increase the learning phase. The final
+representation is a 9x17x17 tensor, summarized in Table \ref{tab:tensor}.
 \begin{table}
+\includegraphics[scale=0.5]{Features.JPG}
+
 \caption{Features used as inputs for Texas Hold'em no Limit Poker \label{tab:tensor}}
 \end{table}
 
