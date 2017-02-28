@@ -14,60 +14,48 @@ state = "river"
 ### Set Layer Options ###
 
 # Convolutional Layer 1.
-filter_size1 = 3  # Convolution filters are 3 x 3 pixels.
-num_filters1 = 16
+filter_size1 = 3
+num_filters1 = 50
 # Convolutional Layer 2.
-filter_size2 = 3  # Convolution filters are 3 x 3 pixels.
-num_filters2 = 16  # There are 30 of these filters.
+filter_size2 = 3
+num_filters2 = 50
 # Convolutional Layer 3.
-filter_size3 = 3  # Convolution filters are 3 x 3 Pixels
+filter_size3 = 3
 num_filters3 = 32
 # Convolutional Layer 4.
 filter_size4 = 3
 num_filters4 = 32
 
 # Fully-connected layer.
-fc_size = 512# Number of neurons in fully-connected layer.
+fc_size = 512
 
 ### Define data dimensions ###
 
 # Size for each slize
 slice_size = 17
-
 # Size for the depth
 depth = 9
-
 # (Results in 17x17x9 later)
 
 # Flat slice
 slice_flat = slice_size * slice_size
-
 # Number of output results
 num_classes = 2
 
-### Load Data ###
-
-# WIP #
-# Test data:
-'''
-data = np.zeros((slice_size, slice_size, depth))
-labels = [[0, 0, 0, 0, 1, 0, 0, 0, 0, 0]]
-'''
-
-
 ### Helper functions ###
 
+# create new weights
 def new_weights(shape):
     return tf.Variable(tf.truncated_normal(shape, stddev=0.05))
 
-
+# create new biases
 def new_biases(length):
     return tf.Variable(tf.constant(0.05, shape=[length]))
 
-
+# get data
 def get_data(state):
     # path needs to be updated
-    path = "/home/nilus/pokerData/"
+    path = "pokerData/"
     if (os.path.exists(path + state + "/save0.pickle")):
         files = (glob.glob(path + state + "/save*.pickle"))
         last_number = []
@@ -84,10 +72,10 @@ def get_data(state):
         raise ValueError('Data could not be found')
     return data
 
-
+# get labels
 def get_results(state):
     # path needs to be updated
-    path = "/home/nilus/pokerData/"
+    path = "pokerData/"
     if (os.path.exists(path + state + "/result0.pickle")):
         files = (glob.glob(path + state + "/result*.pickle"))
         last_number = []
@@ -103,7 +91,7 @@ def get_results(state):
         raise ValueError('Data could not dbe found')
     return result
 
-
+# create a data batch to train/ test
 def get_batch(data, results, size):
     batch = []
     batch_labels = []
@@ -129,7 +117,6 @@ def get_batch(data, results, size):
 
 
 ### Helper to create new conv layer ###
-
 def new_conv_layer(input,  # The previous layer.
                    num_input_channels,  # Num. channels in prev. layer.
                    filter_size,  # Width, height and depth of each filter.
@@ -152,7 +139,7 @@ def new_conv_layer(input,  # The previous layer.
                          strides=[1, 1, 1, 1, 1],
                          padding='SAME')
 
-    # Ass bias
+    # Add bias
     layer += biases
 
     # Maybe ususuable right now, had been used for 2d. Thus by default false
@@ -174,7 +161,6 @@ def new_conv_layer(input,  # The previous layer.
 
 
 ### Helper to flatten the last conv layer and send it in a fc layer ###
-
 def flatten_layer(layer):
     # Get the shape of the input layer.
     layer_shape = layer.get_shape()
@@ -192,7 +178,6 @@ def flatten_layer(layer):
 
 
 ### Helper for the fc layer ###
-
 def new_fc_layer(input,  # The previous layer.
                  num_inputs,  # Num. inputs from prev. layer.
                  num_outputs,  # Num. outputs.
@@ -224,12 +209,9 @@ x_tensor = tf.reshape(x, [-1, slice_size, slice_size, depth, 1])
 
 # OUTPUT
 y_true = tf.placeholder(tf.float32, shape=[None, 2], name='y_true')
-# test = tf.unpack(y_true)
-# y_true_cls = tf.argmax(y_true, dimension=1)
 
 ### Create Layers###
 # Conv 1
-
 layer_conv1, weights_conv1 = new_conv_layer(input=x_tensor,
                                             num_input_channels=1,
                                             filter_size=filter_size1,
@@ -254,9 +236,11 @@ layer_conv4, weights_conv4 = new_conv_layer(input=layer_conv1,
                                             filter_size=filter_size2,
                                             num_filters=num_filters2,
                                             use_pooling=True)
-# Flatten the 4nd conv layer
+
+# Flatten the 4th conv layer
 layer_flat, num_features = flatten_layer(layer_conv4)
 
+#create dense layer
 dense = new_fc_layer(input=layer_flat,
                      num_inputs=num_features,
                      num_outputs=fc_size,
@@ -336,7 +320,7 @@ with tf.Session() as session:
     labels = all_labels[0:int(len(all_labels)*0.85)]
     test_data = all_data[int(len(all_data)*0.85):len(all_data)]
     test_labels = all_labels[int(len(all_labels)*0.85):len(all_labels)]
-    for counter in range(1000):
+    for counter in range(10):
         data_batch, labels_batch, results_batch = get_batch(data, labels, 250)
         # create a dummy feed dict. Works similarly when using a bigger dataset
         feed_dict_train = {x: data_batch, y_true: labels_batch}
