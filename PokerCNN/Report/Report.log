@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (MiKTeX 2.9.6100 64-bit) (preloaded format=pdflatex 2016.11.20)  28 FEB 2017 11:21
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (MiKTeX 2.9.6100 64-bit) (preloaded format=pdflatex 2016.11.20)  28 FEB 2017 11:38
 entering extended mode
 **./Report.tex
 (Report.tex
@@ -141,29 +141,16 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 38.
  [1] [2]
 
-LaTeX Warning: File `Features.JPG' not found on input line 154.
-
-
-! Package pdftex.def Error: File `Features.JPG' not found.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.154 \includegraphics[scale=0.5]{Features.JPG}
-                                               
-Using draft setting for this image.
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
+LaTeX Warning: Reference `tab:tensor' on page 3 undefined on input line 152.
 
 [3] <cnn_structure.jpg, id=25, 697.10437pt x 222.8325pt>
 File: cnn_structure.jpg Graphic file (type jpg)
 
 <use cnn_structure.jpg>
-Package pdftex.def Info: cnn_structure.jpg used on input line 167.
+Package pdftex.def Info: cnn_structure.jpg used on input line 168.
 (pdftex.def)             Requested size: 348.55133pt x 111.41597pt.
 
-Overfull \hbox (3.55133pt too wide) in paragraph at lines 167--168
+Overfull \hbox (3.55133pt too wide) in paragraph at lines 168--169
 [][] 
  []
 
@@ -171,17 +158,17 @@ Overfull \hbox (3.55133pt too wide) in paragraph at lines 167--168
 
 ] (Report.aux)
 
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 1527 strings out of 493333
- 21419 string characters out of 3139190
- 84739 words of memory out of 3000000
- 5063 multiletter control sequences out of 15000+200000
- 9015 words of font info for 32 fonts, out of 3000000 for 9000
+ 1522 strings out of 493333
+ 21380 string characters out of 3139190
+ 84731 words of memory out of 3000000
+ 5061 multiletter control sequences out of 15000+200000
+ 8847 words of font info for 31 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 40i,8n,25p,1460b,220s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 40i,8n,25p,1460b,217s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Pr
 ogram Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Program Fi
 les/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Program Files/MiKTe
@@ -190,10 +177,10 @@ ts/type1/public/amsfonts/cm/cmr17.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/
 public/amsfonts/cm/cmr6.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/ams
 fonts/cm/cmr7.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/c
 mr8.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmti10.pfb>
-<C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on Report.pdf (7 pages, 188445 bytes).
+
+Output written on Report.pdf (7 pages, 180172 bytes).
 PDF statistics:
- 67 PDF objects out of 1000 (max. 8388607)
+ 63 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  6 words of extra memory for PDF output out of 10000 (max. 10000000)
 
