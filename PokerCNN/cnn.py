@@ -9,7 +9,8 @@ import pickle
 import os.path
 import glob
 
-### Set the state to Train
+### Set the state
+# possibel states: river, preflop, flop,.
 state = "river"
 ### Set Layer Options ###
 
@@ -260,22 +261,15 @@ output_layer = tf.nn.softmax(layer_fc1)
 
 
 ### Cost function for backprop ####
-# Calculate cross-entropy first
-#cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=output_layer,
-                                                        #labels=y_true)
-
-# This yields the cost:
-#cost = tf.reduce_mean(cross_entropy)
+# MSE
 cost = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(y_true, layer_fc1))))
 
 
 ### Optimization
 optimizer = tf.train.MomentumOptimizer(learning_rate=0.01, momentum=0.9,
                                    use_locking=False, name='momentum', use_nesterov=True).minimize(cost)
-#optimizer = tf.train.AdamOptimizer(learning_rate=1e-6).minimize(cost)
 
 ### Performace measures ###
-
 def get_win_loss(output, label):
     win_or_loss = 0
     for i in range(len(output)):
@@ -304,25 +298,28 @@ def adapt_data(or_data, or_results):
         label.append(changed_results)
     return data, label
 
+
 ### create saver
 saver = tf.train.Saver()
+
+
 ### start the session ###
 with tf.Session() as session:
     session.run(tf.global_variables_initializer())
 
-    ### NOW WE NEED ACTUAL DATA AND STUFF - THIS IS SKIPPED FOR NOW
-    ### FIRST TEST WITH TEST DATA
-    # Needed here is: A loop, in which batches of train data + labels are retrieved (best by a helper script)
-    # Format: [data1, data2, ... ] , [label1, label2, ...]. data: 3d array, label: 1d array length 10
+    ### GET DATA ###
     all_data = get_data(state)
     all_labels = get_results(state)
     data = all_data[0:int(len(all_data)*0.85)]
     labels = all_labels[0:int(len(all_labels)*0.85)]
     test_data = all_data[int(len(all_data)*0.85):len(all_data)]
     test_labels = all_labels[int(len(all_labels)*0.85):len(all_labels)]
-    for counter in range(10):
+
+    ### Run batches for training ###
+    batches = 1000
+    for counter in range(batches):
         data_batch, labels_batch, results_batch = get_batch(data, labels, 250)
-        # create a dummy feed dict. Works similarly when using a bigger dataset
+        # create the training feed dict
         feed_dict_train = {x: data_batch, y_true: labels_batch}
         # run the network
         session.run(optimizer, feed_dict=feed_dict_train)
@@ -336,6 +333,7 @@ with tf.Session() as session:
         print("best win_loss: ", get_win_loss(labels_batch, results_batch))
         print(msg.format(counter, acc))
 
+    ### Run validation ###
     print("Validation started")
     data_test, label_test = adapt_data(test_data, test_labels)
     feed_dict_test = {x: data_test, y_true: label_test}
